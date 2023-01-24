@@ -83,7 +83,7 @@
               "type": 3,
               "content": {
                 "version": "KqlItem/1.0",
-                "query": "resources\r\n| where type == \"microsoft.network/applicationgateways\"\r\n| extend\r\n    used_backend_pools = array_length(properties.backendAddressPools),\r\n    total_backend_pools = 100,\r\n    used_http_settings = array_length(properties.backendHttpSettingsCollection),\r\n    total_http_settings = 100,\r\n    used_http_listeners = array_length(properties.httpListeners),\r\n    total_http_listeners = 100\r\n| extend\r\n    remaining_backend_pools = total_backend_pools - used_backend_pools,\r\n    remaining_http_settings = total_http_settings - used_http_settings,\r\n    remaining_http_listeners = total_http_listeners - used_http_listeners\r\n| project \r\n    id, \r\n    V2 = iff(toupper(properties.sku.tier) contains \"V2\", \"✓\", \"\"),\r\n    WAF = iff(toupper(properties.sku.tier) contains \"WAF\", \"✓\", \"\"),\r\n    used_backend_pools,\r\n    used_http_settings,\r\n    used_http_listeners,\r\n    remaining_backend_pools,\r\n    remaining_http_settings,\r\n    remaining_http_listeners,\r\n    status = case(\r\n        remaining_backend_pools == 0, \"critical\", \r\n        remaining_http_settings == 0, \"critical\",\r\n        remaining_http_listeners == 0, \"critical\",\r\n        remaining_backend_pools < 10, \"warning\", \r\n        remaining_http_settings < 10, \"warning\",\r\n        remaining_http_listeners < 10, \"warning\",\r\n        remaining_backend_pools < 20, \"success\", \r\n        remaining_http_settings < 20, \"success\",\r\n        remaining_http_listeners < 20, \"success\",\r\n        \"success\")\r\n| order by status asc",
+                "query": "resources\r\n| where type == \"microsoft.network/applicationgateways\"\r\n| extend\r\n    used_backend_pools = array_length(properties.backendAddressPools),\r\n    total_backend_pools = 100,\r\n    used_http_settings = array_length(properties.backendHttpSettingsCollection),\r\n    total_http_settings = 100,\r\n    used_http_listeners = array_length(properties.httpListeners),\r\n    total_http_listeners = 100\r\n| extend\r\n    remaining_backend_pools = total_backend_pools - used_backend_pools,\r\n    remaining_http_settings = total_http_settings - used_http_settings,\r\n    remaining_http_listeners = total_http_listeners - used_http_listeners\r\n| project \r\n    subscriptionId,\r\n    rg = id, \r\n    id, \r\n    V2 = iff(toupper(properties.sku.tier) contains \"V2\", \"✓\", \"\"),\r\n    WAF = iff(toupper(properties.sku.tier) contains \"WAF\", \"✓\", \"\"),\r\n    used_backend_pools,\r\n    used_http_settings,\r\n    used_http_listeners,\r\n    remaining_backend_pools,\r\n    remaining_http_settings,\r\n    remaining_http_listeners,\r\n    status = case(\r\n        remaining_backend_pools == 0, \"critical\", \r\n        remaining_http_settings == 0, \"critical\",\r\n        remaining_http_listeners == 0, \"critical\",\r\n        remaining_backend_pools < 10, \"warning\", \r\n        remaining_http_settings < 10, \"warning\",\r\n        remaining_http_listeners < 10, \"warning\",\r\n        remaining_backend_pools < 20, \"success\", \r\n        remaining_http_settings < 20, \"success\",\r\n        remaining_http_listeners < 20, \"success\",\r\n        \"success\")\r\n| order by status asc",
                 "size": 0,
                 "noDataMessage": "No application gateways found in the selected subscription",
                 "queryType": 1,
@@ -94,71 +94,27 @@
                 "gridSettings": {
                   "formatters": [
                     {
-                      "columnMatch": "used_backend_pools",
-                      "formatter": 22,
+                      "columnMatch": "subscriptionId",
+                      "formatter": 15,
                       "formatOptions": {
-                        "compositeBarSettings": {
-                          "labelText": "[\"used_backend_pools\"] / 100",
-                          "columnSettings": [
-                            {
-                              "columnName": "used_backend_pools",
-                              "color": "orange"
-                            },
-                            {
-                              "columnName": "remaining_backend_pools",
-                              "color": "blue"
-                            }
-                          ],
-                          "noRowsScaling": true
-                        }
+                        "linkTarget": null,
+                        "showIcon": true
                       }
                     },
                     {
-                      "columnMatch": "used_http_settings",
-                      "formatter": 22,
+                      "columnMatch": "rg",
+                      "formatter": 14,
                       "formatOptions": {
-                        "compositeBarSettings": {
-                          "labelText": "[\"used_http_settings\"] / 100",
-                          "columnSettings": [
-                            {
-                              "columnName": "used_http_settings",
-                              "color": "orange"
-                            },
-                            {
-                              "columnName": "remaining_http_settings",
-                              "color": "blue"
-                            }
-                          ],
-                          "noRowsScaling": true
-                        }
-                      }
-                    },
-                    {
-                      "columnMatch": "used_http_listeners",
-                      "formatter": 22,
-                      "formatOptions": {
-                        "compositeBarSettings": {
-                          "labelText": "[\"used_http_listeners\"] / 100",
-                          "columnSettings": [
-                            {
-                              "columnName": "used_http_listeners",
-                              "color": "orange"
-                            },
-                            {
-                              "columnName": "remaining_http_listeners",
-                              "color": "blue"
-                            }
-                          ],
-                          "noRowsScaling": true
-                        }
+                        "linkTarget": null,
+                        "showIcon": true
                       }
                     },
                     {
                       "columnMatch": "remaining_backend_pools",
-                      "formatter": 5,
+                      "formatter": 22,
                       "formatOptions": {
                         "compositeBarSettings": {
-                          "labelText": "",
+                          "labelText": "[\"used_backend_pools\"] / 100",
                           "columnSettings": [
                             {
                               "columnName": "used_backend_pools",
@@ -180,10 +136,10 @@
                     },
                     {
                       "columnMatch": "remaining_http_settings",
-                      "formatter": 5,
+                      "formatter": 22,
                       "formatOptions": {
                         "compositeBarSettings": {
-                          "labelText": "",
+                          "labelText": "[\"used_http_settings\"] / 100",
                           "columnSettings": [
                             {
                               "columnName": "used_http_settings",
@@ -199,10 +155,10 @@
                     },
                     {
                       "columnMatch": "remaining_http_listeners",
-                      "formatter": 5,
+                      "formatter": 22,
                       "formatOptions": {
                         "compositeBarSettings": {
-                          "labelText": "",
+                          "labelText": "[\"used_http_listeners\"] / 100",
                           "columnSettings": [
                             {
                               "columnName": "used_http_listeners",
@@ -229,11 +185,19 @@
                   ],
                   "sortBy": [
                     {
-                      "itemKey": "$gen_compositeBar_used_http_listeners_5",
+                      "itemKey": "used_http_settings",
                       "sortOrder": 2
                     }
                   ],
                   "labelSettings": [
+                    {
+                      "columnId": "subscriptionId",
+                      "label": "Subscription"
+                    },
+                    {
+                      "columnId": "rg",
+                      "label": "Resource Group"
+                    },
                     {
                       "columnId": "id",
                       "label": "Gateway"
@@ -270,7 +234,7 @@
                 },
                 "sortBy": [
                   {
-                    "itemKey": "$gen_compositeBar_used_http_listeners_5",
+                    "itemKey": "used_http_settings",
                     "sortOrder": 2
                   }
                 ]
@@ -304,7 +268,7 @@
               "type": 3,
               "content": {
                 "version": "KqlItem/1.0",
-                "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinid = toupper(id)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, capacity = sku.capacity, aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n) on $left.aseJoinid == $right.aseJoinId\r\n| project aseId = aseJoinId, aspId = aspJoinId, instances = toint(capacity)\r\n| summarize aspCount = count(), totalInstances = sum(instances) by aseId\r\n| extend remaining_instances = 200 - totalInstances\r\n| order by totalInstances desc\r\n\r\n",
+                "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project subscriptionId, aseJoinid = toupper(id)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, capacity = sku.capacity, aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n) on $left.aseJoinid == $right.aseJoinId\r\n| project subscriptionId, rg = aseJoinId, aseId = aseJoinId, aspId = aspJoinId, instances = toint(capacity)\r\n| summarize aspCount = count(), totalInstances = sum(instances) by subscriptionId, rg, aseId\r\n| extend remaining_instances = 200 - totalInstances\r\n| order by totalInstances desc\r\n\r\n",
                 "size": 1,
                 "queryType": 1,
                 "resourceType": "microsoft.resourcegraph/resources",
@@ -313,6 +277,22 @@
                 ],
                 "gridSettings": {
                   "formatters": [
+                    {
+                      "columnMatch": "subscriptionId",
+                      "formatter": 15,
+                      "formatOptions": {
+                        "linkTarget": null,
+                        "showIcon": true
+                      }
+                    },
+                    {
+                      "columnMatch": "rg",
+                      "formatter": 14,
+                      "formatOptions": {
+                        "linkTarget": null,
+                        "showIcon": true
+                      }
+                    },
                     {
                       "columnMatch": "aspCount",
                       "formatter": 5
@@ -339,11 +319,19 @@
                   ],
                   "sortBy": [
                     {
-                      "itemKey": "totalInstances",
+                      "itemKey": "$gen_link_rg_1",
                       "sortOrder": 2
                     }
                   ],
                   "labelSettings": [
+                    {
+                      "columnId": "subscriptionId",
+                      "label": "Subscription"
+                    },
+                    {
+                      "columnId": "rg",
+                      "label": "Resource Group"
+                    },
                     {
                       "columnId": "aseId",
                       "label": "ASE"
@@ -360,7 +348,7 @@
                 },
                 "sortBy": [
                   {
-                    "itemKey": "totalInstances",
+                    "itemKey": "$gen_link_rg_1",
                     "sortOrder": 2
                   }
                 ]
