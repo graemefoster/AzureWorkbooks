@@ -344,7 +344,7 @@
               "type": 3,
               "content": {
                 "version": "KqlItem/1.0",
-                "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinId = toupper(id)\r\n| join kind=leftouter (\r\n    resources \r\n    | where type == \"microsoft.web/serverfarms\" \r\n    | extend aseJoinId = toupper(properties.hostingEnvironmentId)\r\n    | summarize ase_used_instances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=fullouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, size = sku.size, instances = toint(sku.capacity), aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n    | project aseJoinId, aspJoinId, instances, tier, size\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=leftouter (\r\n            resources         \r\n            | where type == \"microsoft.web/sites\"         \r\n            | extend aspJoinId = toupper(properties.serverFarmId)         \r\n            | summarize appCount=count(), app_ids = makeset(id) by aspJoinId \r\n) on $left.aspJoinId == $right.aspJoinId\r\n| extend \r\n    maxAppRecommendation =\r\n        case(\r\n            size == 'F1', 9999,\r\n\r\n            size == 'B1', 8,\r\n            size == 'S1', 8,\r\n            size == 'P1v2', 8,\r\n            size == 'I1', 8,\r\n\r\n            size == 'B2', 16,\r\n            size == 'S2', 16,\r\n            size == 'P2v2', 16,\r\n            size == 'I2', 16,\r\n            size == 'I1v2', 16,\r\n\r\n            size == 'B3', 32,\r\n            size == 'S3', 32,\r\n            size == 'P3v2', 32,\r\n            size == 'P2v3', 32,\r\n            size == 'I3', 32,\r\n            size == 'I2v2', 32,\r\n\r\n            size == 'P3v3', 64,\r\n            size == 'I3v2', 64,\r\n\r\n            size == 'I4v2', 128,\r\n            size == 'I5v2', 256,\r\n            size == 'I6v2', 512,\r\n            0\r\n        )\r\n| extend \r\n    remainingAppSlots = maxAppRecommendation - appCount,\r\n    used_recommended_apps = min_of(maxAppRecommendation, appCount)\r\n| extend\r\n    remaining_recommended_apps = max_of(0, remainingAppSlots),\r\n    over_recommended_apps =  -min_of(remainingAppSlots, 0)\r\n| project \r\n    aseId = aseJoinId, \r\n    aspId = aspJoinId, \r\n    instances,\r\n    remaining_possible_instances = min_of(100 - instances, (200 - ase_used_instances)),\r\n    appCount, \r\n    tier, \r\n    size, \r\n    used_recommended_apps,\r\n    remaining_recommended_apps,\r\n    over_recommended_apps,\r\n    app_ids = app_ids,\r\n    apps_label = \r\n        strcat(\r\n            tostring(used_recommended_apps), \r\n            case(remaining_recommended_apps > 0, strcat(\" (\", tostring(remaining_recommended_apps), \" remaining)\"), \"\"),\r\n            case(over_recommended_apps > 0, strcat(\" (\", tostring(over_recommended_apps), \" over)\"), \"\") \r\n        )\r\n  \r\n| order by appCount, instances desc\r\n",
+                "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinId = toupper(id)\r\n| join kind=leftouter (\r\n    resources \r\n    | where type == \"microsoft.web/serverfarms\" \r\n    | extend aseJoinId = toupper(properties.hostingEnvironmentId)\r\n    | summarize ase_used_instances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=fullouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, size = sku.size, instances = toint(sku.capacity), aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n    | project aseJoinId, aspJoinId, instances, tier, size\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=leftouter (\r\n            resources         \r\n            | where type == \"microsoft.web/sites\"         \r\n            | extend aspJoinId = toupper(properties.serverFarmId)         \r\n            | summarize appCount=count(), app_ids = makeset(id) by aspJoinId \r\n) on $left.aspJoinId == $right.aspJoinId\r\n| extend \r\n    maxAppRecommendation =\r\n        case(\r\n            size == 'F1', 9999,\r\n\r\n            size == 'B1', 8,\r\n            size == 'S1', 8,\r\n            size == 'P1v2', 8,\r\n            size == 'I1', 8,\r\n\r\n            size == 'B2', 16,\r\n            size == 'S2', 16,\r\n            size == 'P2v2', 16,\r\n            size == 'I2', 16,\r\n            size == 'I1v2', 16,\r\n\r\n            size == 'B3', 32,\r\n            size == 'S3', 32,\r\n            size == 'P3v2', 32,\r\n            size == 'P2v3', 32,\r\n            size == 'I3', 32,\r\n            size == 'I2v2', 32,\r\n\r\n            size == 'P3v3', 64,\r\n            size == 'I3v2', 64,\r\n\r\n            size == 'I4v2', 128,\r\n            size == 'I5v2', 256,\r\n            size == 'I6v2', 512,\r\n            0\r\n        )\r\n| extend \r\n    remainingAppSlots = maxAppRecommendation - appCount,\r\n    used_recommended_apps = min_of(maxAppRecommendation, appCount)\r\n| extend\r\n    remaining_recommended_apps = max_of(0, remainingAppSlots),\r\n    over_recommended_apps =  -min_of(remainingAppSlots, 0)\r\n| project \r\n    aseId = aseJoinId, \r\n    aspId = aspJoinId, \r\n    tier, \r\n    size, \r\n    instances,\r\n    appCount, \r\n    remaining_possible_instances = min_of(100 - instances, (200 - ase_used_instances)),\r\n    used_recommended_apps,\r\n    remaining_recommended_apps,\r\n    over_recommended_apps,\r\n    app_ids = app_ids,\r\n    apps_label = \r\n        strcat(\r\n            tostring(used_recommended_apps), \r\n            case(remaining_recommended_apps > 0, strcat(\" (\", tostring(remaining_recommended_apps), \" remaining)\"), \"\"),\r\n            case(over_recommended_apps > 0, strcat(\" (\", tostring(over_recommended_apps), \" over)\"), \"\") \r\n        )\r\n  \r\n| order by appCount, instances desc\r\n",
                 "size": 1,
                 "exportedParameters": [
                   {
@@ -370,7 +370,11 @@
                 "gridSettings": {
                   "formatters": [
                     {
-                      "columnMatch": "instances",
+                      "columnMatch": "tier",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "remaining_possible_instances",
                       "formatter": 22,
                       "formatOptions": {
                         "compositeBarSettings": {
@@ -384,17 +388,20 @@
                               "columnName": "remaining_possible_instances",
                               "color": "blue"
                             }
-                          ],
-                          "noRowsScaling": true
+                          ]
                         }
                       }
                     },
                     {
-                      "columnMatch": "remaining_possible_instances",
+                      "columnMatch": "used_recommended_apps",
                       "formatter": 5
                     },
                     {
-                      "columnMatch": "appCount",
+                      "columnMatch": "remaining_recommended_apps",
+                      "formatter": 5
+                    },
+                    {
+                      "columnMatch": "over_recommended_apps",
                       "formatter": 22,
                       "formatOptions": {
                         "compositeBarSettings": {
@@ -416,22 +423,6 @@
                           "noRowsScaling": true
                         }
                       }
-                    },
-                    {
-                      "columnMatch": "tier",
-                      "formatter": 5
-                    },
-                    {
-                      "columnMatch": "used_recommended_apps",
-                      "formatter": 5
-                    },
-                    {
-                      "columnMatch": "remaining_recommended_apps",
-                      "formatter": 5
-                    },
-                    {
-                      "columnMatch": "over_recommended_apps",
-                      "formatter": 5
                     },
                     {
                       "columnMatch": "app_ids",
@@ -461,15 +452,45 @@
                   ],
                   "sortBy": [
                     {
-                      "itemKey": "$gen_compositeBar_appCount_4",
-                      "sortOrder": 1
+                      "itemKey": "appCount",
+                      "sortOrder": 2
+                    }
+                  ],
+                  "labelSettings": [
+                    {
+                      "columnId": "aseId",
+                      "label": "ASE"
+                    },
+                    {
+                      "columnId": "aspId",
+                      "label": "ASP"
+                    },
+                    {
+                      "columnId": "size",
+                      "label": "Size"
+                    },
+                    {
+                      "columnId": "instances",
+                      "label": "Instances"
+                    },
+                    {
+                      "columnId": "appCount",
+                      "label": "Application Count"
+                    },
+                    {
+                      "columnId": "remaining_possible_instances",
+                      "label": "Available Instances for Plan"
+                    },
+                    {
+                      "columnId": "over_recommended_apps",
+                      "label": "Provisioned Apps Status"
                     }
                   ]
                 },
                 "sortBy": [
                   {
-                    "itemKey": "$gen_compositeBar_appCount_4",
-                    "sortOrder": 1
+                    "itemKey": "appCount",
+                    "sortOrder": 2
                   }
                 ]
               },
