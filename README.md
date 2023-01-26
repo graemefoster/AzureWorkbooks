@@ -1,10 +1,12 @@
-# AzureGatewayAppServiceWorkbook
+# Azure Workbooks
 
 TLDR;
 
 A workbook to help with operations of your Application Gateways, App Services and App Service Environments.
 
 ## Application Gateways
+
+> [./AppGatewayInsights.json](./AppGatewayInsights.json)
 
 The workbook shows all your Application Gateways in a selected subscription along some properties that have hard limits:
 
@@ -14,11 +16,15 @@ The workbook shows all your Application Gateways in a selected subscription alon
  - Count of used Http Settings
  - Count of used Http Listeners
 
-## App Service Environments
+## App Service Plans and App Service Environments
+
+> [./AppServiceInsights.json](./AppServiceInsights.json)
+
+### App Service Environments
 
 The workbook shows all ASEs along with the number of instances that have been applied to all ASPs within. There is a 200 limit of instances that can be applied.
 
-## App Service Plans
+### App Service Plans
 
 The workbook shows all App Service Plans along with
 
