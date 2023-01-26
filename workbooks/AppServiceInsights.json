@@ -367,7 +367,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "let AllApps = datatable(ResourceId: string) {AppServiceIdsJsonString};\r\nAzureMetrics\r\n| where MetricName == \"CpuTime\" or MetricName == \"PrivateBytes\" or MetricName == \"Requests\"\r\n| summarize Amount = sum(Maximum) by MetricName, ResourceId\r\n| summarize Percentile = percentile(Amount, 80) by MetricName, ResourceId = toupper(ResourceId)\r\n| evaluate pivot(MetricName, sum(Percentile))\r\n| join kind=rightouter (AllApps | project ResourceId = toupper(ResourceId)) on $left.ResourceId == $right.ResourceId\r\n| project App = ResourceId1,  CpuTime, PrivateBytes, Requests\r\n| order by CpuTime desc, PrivateBytes desc, Requests desc\r\n\r\n",
+              "query": "let AllApps = datatable(ResourceId: string) {AppServiceIdsJsonString};\r\nlet Percentile = 75;\r\nlet Requests = AzureMetrics | where MetricName == \"Requests\" | summarize Amount = sum(Maximum) by MetricName, ResourceId = toupper(ResourceId) | summarize Percentile = percentile(Amount, Percentile) by ResourceId | project ResourceId, Requests = Percentile;\r\nlet CpuTimeAndRam = AzureMetrics | where MetricName == \"CpuTime\" or MetricName == \"PrivateBytes\" | summarize Amount = avg(Average) by MetricName, ResourceId = toupper(ResourceId) | summarize Percentile = percentile(Amount, Percentile) by ResourceId, MetricName | evaluate pivot(MetricName, avg(Percentile), ResourceId);\r\nAllApps \r\n| project ResourceId = toupper(ResourceId)\r\n| join kind=leftouter Requests on $left.ResourceId == $right.ResourceId\r\n| join kind=leftouter CpuTimeAndRam on $left.ResourceId == $right.ResourceId\r\n| project App = ResourceId,  CpuTime, PrivateBytes, Requests\r\n| order by CpuTime desc, PrivateBytes desc, Requests desc\r\n",
               "size": 0,
               "timeContext": {
                 "durationMs": 259200000
@@ -408,7 +408,8 @@
                     }
                   }
                 ]
-              }
+              },
+              "sortBy": []
             },
             "customWidth": "75",
             "name": "query - 5"
