@@ -323,7 +323,7 @@
           {
             "type": 1,
             "content": {
-              "json": "# App Service Plan / Apps Performance\r\n\r\n*If the overall CPU Time and Memory Percentage of the ASP is low, then it **may** indiciate its safe to scale down your ASP*\r\n\r\n*If no data is shown in the table then check you have Metrics being sent to a Log Workspace, in the Diagnostic Settings of your apps*\r\n\r\nThis table helps understand which apps fit well together in an ASP.\r\nIt summarizes CPU Time, Private Bytes, Requests at the 80th Percentile. Any Application sitting past this has is either using more RAM, more CPU Time, or has significantly more requests than its neighbours, and you should consider moving it into its own ASP.\r\n"
+              "json": "# App Service Plan / Apps Performance\r\n\r\n*If the overall CPU Time and Memory Percentage of the ASP is low, then it **may** indiciate its safe to scale down your ASP*\r\n\r\n*If no data is shown in the table then check you have Metrics being sent to a Log Workspace, in the Diagnostic Settings of your apps*\r\n\r\nThis table helps understand which apps fit well together in an ASP.\r\nIt summarizes CPU Time, Private Bytes, Requests across the Apps. If you spot Apps this are using more RAM, CPU Time, or have significantly more requests than its neighbours, then consider moving them into other ASPs.\r\n"
             },
             "name": "text - 6"
           },
@@ -367,7 +367,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "let AllApps = datatable(ResourceId: string) {AppServiceIdsJsonString};\r\nlet Percentile = 75;\r\nlet Requests = AzureMetrics | where MetricName == \"Requests\" | summarize Amount = sum(Maximum) by MetricName, ResourceId = toupper(ResourceId) | summarize Percentile = percentile(Amount, Percentile) by ResourceId | project ResourceId, Requests = Percentile;\r\nlet CpuTimeAndRam = AzureMetrics | where MetricName == \"CpuTime\" or MetricName == \"PrivateBytes\" | summarize Amount = avg(Average) by MetricName, ResourceId = toupper(ResourceId) | summarize Percentile = percentile(Amount, Percentile) by ResourceId, MetricName | evaluate pivot(MetricName, avg(Percentile), ResourceId);\r\nAllApps \r\n| project ResourceId = toupper(ResourceId)\r\n| join kind=leftouter Requests on $left.ResourceId == $right.ResourceId\r\n| join kind=leftouter CpuTimeAndRam on $left.ResourceId == $right.ResourceId\r\n| project App = ResourceId,  CpuTime, PrivateBytes, Requests\r\n| order by CpuTime desc, PrivateBytes desc, Requests desc\r\n",
+              "query": "let AllApps = datatable(ResourceId: string) {AppServiceIdsJsonString};\r\nlet Percentile = 75;\r\nlet Requests = AzureMetrics | where MetricName == \"Requests\" | summarize Requests = sum(Maximum) by MetricName, ResourceId = toupper(ResourceId);\r\nlet CpuTimeAndRam = AzureMetrics | where MetricName == \"CpuTime\" or MetricName == \"PrivateBytes\" | summarize Amount = avg(Average) by MetricName, ResourceId = toupper(ResourceId) | evaluate pivot(MetricName, avg(Amount), ResourceId);\r\nAllApps \r\n| project ResourceId = toupper(ResourceId)\r\n| join kind=leftouter Requests on $left.ResourceId == $right.ResourceId\r\n| join kind=leftouter CpuTimeAndRam on $left.ResourceId == $right.ResourceId\r\n| project App = ResourceId,  CpuTime, PrivateBytes, Requests\r\n| order by CpuTime desc, PrivateBytes desc, Requests desc\r\n",
               "size": 0,
               "timeContext": {
                 "durationMs": 259200000
