@@ -365,10 +365,10 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "AzureMetrics\r\n| where MetricName == \"CpuTime\" or MetricName == \"PrivateBytes\"\r\n| summarize Percentile = percentile(Maximum, 80) by MetricName, Resource\r\n| evaluate pivot(MetricName, sum(Percentile))\r\n",
+              "query": "AzureMetrics\r\n| where MetricName == \"CpuTime\" or MetricName == \"PrivateBytes\" or MetricName == \"Requests\"\r\n| summarize Amount = sum(Maximum) by MetricName, Resource\r\n| summarize Percentile = percentile(Amount, 80) by MetricName, Resource\r\n| evaluate pivot(MetricName, sum(Percentile))\r\n",
               "size": 0,
               "timeContext": {
-                "durationMs": 604800000
+                "durationMs": 259200000
               },
               "queryType": 0,
               "resourceType": "microsoft.web/sites",
@@ -386,6 +386,13 @@
                   },
                   {
                     "columnMatch": "PrivateBytes",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "orangeRed"
+                    }
+                  },
+                  {
+                    "columnMatch": "Requests",
                     "formatter": 8,
                     "formatOptions": {
                       "palette": "orangeRed"
