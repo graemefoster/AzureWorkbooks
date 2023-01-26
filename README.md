@@ -6,7 +6,7 @@ A workbook to help with operations of your Application Gateways, App Services an
 
 ## Application Gateways
 
-> [./AppGatewayInsights.json](./AppGatewayInsights.json)
+> [AppGatewayInsights.json](workbooks/AppGatewayInsights.json)
 
 The workbook shows all your Application Gateways in a selected subscription along some properties that have hard limits:
 
@@ -18,7 +18,7 @@ The workbook shows all your Application Gateways in a selected subscription alon
 
 ## App Service Plans and App Service Environments
 
-> [./AppServiceInsights.json](./AppServiceInsights.json)
+> [AppServiceInsights.json](workbooks/AppServiceInsights.json)
 
 ### App Service Environments
 
