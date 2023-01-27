@@ -367,7 +367,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "let AllApps = datatable(ResourceId: string) {AppServiceIdsJsonString} | project ResourceId = toupper(ResourceId);\r\nlet Requests = AzureMetrics | where ResourceProvider == \"MICROSOFT.WEB\" | where MetricName == \"Requests\" | summarize Requests = sum(Total) by MetricName, ResourceId;\r\nlet CpuTimeAndRam = AzureMetrics | where ResourceProvider == \"MICROSOFT.WEB\" | where MetricName == \"CpuTime\" or MetricName == \"PrivateBytes\" or MetricName == \"TcpEstablished\" | summarize Amount = avg(Average) by MetricName, ResourceId | evaluate pivot(MetricName, avg(Amount), ResourceId);\r\nAllApps \r\n| join kind=leftouter Requests on $left.ResourceId == $right.ResourceId\r\n| join kind=leftouter CpuTimeAndRam on $left.ResourceId == $right.ResourceId\r\n| project App = ResourceId,  CpuTime = column_ifexists(\"CpuTime\", 0), PrivateBytes = column_ifexists(\"PrivateBytes\", 0), Requests = column_ifexists(\"Requests\", 0), TcpEstablished = column_ifexists(\"TcpEstablished\", 0)\r\n| order by CpuTime desc, PrivateBytes desc, Requests desc\r\n",
+              "query": "let AllApps = datatable(ResourceId: string) {AppServiceIdsJsonString} | project ResourceId = toupper(ResourceId);\r\nlet Metrics = AzureMetrics | where ResourceProvider == \"MICROSOFT.WEB\" and (MetricName == \"CpuTime\" or MetricName == \"PrivateBytes\" or MetricName == \"AppConnections\" or MetricName == \"Requests\") | summarize Amount = avg(Average) by MetricName, ResourceId | evaluate pivot(MetricName, avg(Amount), ResourceId);\r\nAllApps \r\n| join kind=leftouter Metrics on $left.ResourceId == $right.ResourceId\r\n| project App = ResourceId,  AverageCpuTimePerMinute = column_ifexists(\"CpuTime\", 0), AveragePrivateBytes = column_ifexists(\"PrivateBytes\", 0), AverageRequestsPerMinute = column_ifexists(\"Requests\", 0), AverageAppConnectionsPerMinute = toint(column_ifexists(\"AppConnections\", 0))\r\n| order by AverageCpuTimePerMinute desc, AveragePrivateBytes desc, AverageRequestsPerMinute desc, AverageAppConnectionsPerMinute desc\r\n",
               "size": 0,
               "timeContext": {
                 "durationMs": 259200000
@@ -395,6 +395,13 @@
                   },
                   {
                     "columnMatch": "Requests",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "yellowOrangeRed"
+                    }
+                  },
+                  {
+                    "columnMatch": "AverageAppConnectionsPerMinute",
                     "formatter": 8,
                     "formatOptions": {
                       "palette": "yellowOrangeRed"
