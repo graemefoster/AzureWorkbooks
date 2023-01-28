@@ -4,6 +4,14 @@ TLDR;
 
 A workbook to help with operations of your Application Gateways, App Services and App Service Environments.
 
+To install
+
+```bash
+az login
+az account set --subscription <subscription-id>
+az deployment group create --resource-group <rg> --template-file .\infra\deploy.bicep
+```
+
 ## Application Gateways
 
 > [AppGatewayInsights.json](workbooks/AppGatewayInsights.json)
