@@ -11,7 +11,7 @@ param kind string = 'user'
 param location string = resourceGroup().location
 
 resource workbook 'Microsoft.Insights/workbooks@2021-03-08' = {
-  name: 'AspAndAseInsights'
+  name: '37b3c65d-fea6-42e3-88b0-b165fa9a103d'
   location: location
   tags: {
     'hidden-title': workbookName
