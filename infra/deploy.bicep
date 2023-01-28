@@ -1,13 +1,13 @@
 targetScope = 'resourceGroup'
 
 param workbookName string = 'ASE and ASP Insights'
-param workbookSourceId string = 'Azure Monitor'
+param workbookSourceId string = 'azure monitor'
 
 @allowed([
   'shared'
   'user'
 ])
-param kind string = 'user'
+param kind string = 'shared'
 param location string = resourceGroup().location
 
 resource workbook 'Microsoft.Insights/workbooks@2021-03-08' = {
