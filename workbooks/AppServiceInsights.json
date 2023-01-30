@@ -22,6 +22,7 @@
               "durationMs": 86400000
             },
             "value": [
+              "/subscriptions/f9ca16c3-50f4-4012-a2ee-4bc1efeffbf0"
             ]
           }
         ],
@@ -165,7 +166,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinId = toupper(id)\r\n| join kind=leftouter (\r\n    resources \r\n    | where type == \"microsoft.web/serverfarms\" \r\n    | extend aseJoinId = toupper(properties.hostingEnvironmentId)\r\n    | summarize ase_used_instances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=fullouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, size = sku.size, instances = toint(sku.capacity), aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n    | project aseJoinId, aspJoinId, instances, tier, size\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=leftouter (\r\n            resources         \r\n            | where type == \"microsoft.web/sites\"         \r\n            | extend aspJoinId = toupper(properties.serverFarmId)         \r\n            | summarize appCount=count(), app_ids = makeset(id) by aspJoinId\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| extend \r\n    maxAppRecommendation =\r\n        case(\r\n            size == 'F1', 9999,\r\n\r\n            size == 'B1', 8,\r\n            size == 'S1', 8,\r\n            size == 'P1v2', 8,\r\n            size == 'I1', 8,\r\n\r\n            size == 'B2', 16,\r\n            size == 'S2', 16,\r\n            size == 'P1v3', 16,\r\n            size == 'P2v2', 16,\r\n            size == 'I2', 16,\r\n            size == 'I1v2', 16,\r\n\r\n            size == 'B3', 32,\r\n            size == 'S3', 32,\r\n            size == 'P3v2', 32,\r\n            size == 'P2v3', 32,\r\n            size == 'I3', 32,\r\n            size == 'I2v2', 32,\r\n\r\n            size == 'P3v3', 64,\r\n            size == 'I3v2', 64,\r\n\r\n            size == 'I4v2', 128,\r\n            size == 'I5v2', 256,\r\n            size == 'I6v2', 512,\r\n            0\r\n        )\r\n| extend \r\n    allowedHybridConnections = case(\r\n            substring(size, 0, 1)  == 'B', 5,\r\n            substring(size, 0, 1)  == 'S', 25,\r\n            substring(size, 0, 1)  == 'P', 220,\r\n            substring(size, 0, 1)  == 'I', 220,\r\n            0\r\n   )\r\n| extend \r\n    remainingAppSlots = maxAppRecommendation - appCount,\r\n    used_recommended_apps = min_of(maxAppRecommendation, appCount)\r\n| extend\r\n    remaining_recommended_apps = max_of(0, remainingAppSlots),\r\n    over_recommended_apps =  -min_of(remainingAppSlots, 0)\r\n| project \r\n    aseId = aseJoinId, \r\n    aspId = aspJoinId, \r\n    tier, \r\n    size, \r\n    instances,\r\n    appCount, \r\n    remaining_possible_instances = min_of(100 - instances, (200 - ase_used_instances)),\r\n    used_recommended_apps,\r\n    remaining_recommended_apps,\r\n    over_recommended_apps,\r\n    app_ids = app_ids,\r\n    app_ids_json_string = tostring(app_ids),\r\n    apps_label = \r\n        strcat(\r\n            case(remaining_recommended_apps > 0, strcat(tostring(used_recommended_apps), \" (\", tostring(remaining_recommended_apps), \" remaining)\"), \"\"),\r\n            case(over_recommended_apps > 0, strcat(tostring(appCount), \" (\", tostring(over_recommended_apps), \" over)\"), \"\") \r\n        ),\r\n    allowedHybridConnections\r\n  \r\n| order by appCount, instances desc\r\n",
+              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinId = toupper(id)\r\n| join kind=leftouter (\r\n    resources \r\n    | where type == \"microsoft.web/serverfarms\" \r\n    | extend aseJoinId = toupper(properties.hostingEnvironmentId)\r\n    | summarize ase_used_instances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=fullouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, size = sku.size, instances = toint(sku.capacity), aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n    | project aseJoinId, aspJoinId, instances, tier, size\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=leftouter (\r\n            resources         \r\n            | where type == \"microsoft.web/sites\" or type == \"microsoft.web/sites/slots\"\r\n            | extend aspJoinId = toupper(properties.serverFarmId), isRunning = iif(properties.state == \"Running\", 1, 0)\r\n            | summarize appCount=count(), runningCount=sum(isRunning), app_ids = makeset(id) by aspJoinId\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| extend \r\n    maxAppRecommendation =\r\n        case(\r\n            size == 'F1', 9999,\r\n\r\n            size == 'B1', 8,\r\n            size == 'S1', 8,\r\n            size == 'P1v2', 8,\r\n            size == 'I1', 8,\r\n\r\n            size == 'B2', 16,\r\n            size == 'S2', 16,\r\n            size == 'P1v3', 16,\r\n            size == 'P2v2', 16,\r\n            size == 'I2', 16,\r\n            size == 'I1v2', 16,\r\n\r\n            size == 'B3', 32,\r\n            size == 'S3', 32,\r\n            size == 'P3v2', 32,\r\n            size == 'P2v3', 32,\r\n            size == 'I3', 32,\r\n            size == 'I2v2', 32,\r\n\r\n            size == 'P3v3', 64,\r\n            size == 'I3v2', 64,\r\n\r\n            size == 'I4v2', 128,\r\n            size == 'I5v2', 256,\r\n            size == 'I6v2', 512,\r\n            0\r\n        )\r\n| extend \r\n    allowedHybridConnections = case(\r\n            substring(size, 0, 1)  == 'B', 5,\r\n            substring(size, 0, 1)  == 'S', 25,\r\n            substring(size, 0, 1)  == 'P', 220,\r\n            substring(size, 0, 1)  == 'I', 220,\r\n            0\r\n   )\r\n| extend \r\n    remainingAppSlots = maxAppRecommendation - appCount,\r\n    used_recommended_apps = min_of(maxAppRecommendation, appCount)\r\n| extend\r\n    remaining_recommended_apps = max_of(0, remainingAppSlots),\r\n    over_recommended_apps =  -min_of(remainingAppSlots, 0)\r\n| project \r\n    aseId = aseJoinId, \r\n    aspId = aspJoinId, \r\n    tier, \r\n    size, \r\n    instances,\r\n    appCount, \r\n    runningCount,\r\n    remaining_possible_instances = min_of(100 - instances, (200 - ase_used_instances)),\r\n    used_recommended_apps,\r\n    remaining_recommended_apps,\r\n    over_recommended_apps,\r\n    app_ids = app_ids,\r\n    app_ids_json_string = tostring(app_ids),\r\n    apps_label = \r\n        strcat(\r\n            case(remaining_recommended_apps > 0, strcat(tostring(used_recommended_apps), \" (\", tostring(remaining_recommended_apps), \" remaining)\"), \"\"),\r\n            case(over_recommended_apps > 0, strcat(tostring(appCount), \" (\", tostring(over_recommended_apps), \" over)\"), \"\") \r\n        ),\r\n    allowedHybridConnections\r\n  \r\n| order by appCount, instances desc\r\n",
               "size": 1,
               "exportedParameters": [
                 {
@@ -303,7 +304,11 @@
                   },
                   {
                     "columnId": "appCount",
-                    "label": "Application Count"
+                    "label": "App Count"
+                  },
+                  {
+                    "columnId": "runningCount",
+                    "label": "Running App Count"
                   },
                   {
                     "columnId": "remaining_possible_instances",
@@ -628,6 +633,158 @@
               }
             ],
             "name": "SelectedAppServicePlan"
+          },
+          {
+            "type": 12,
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "# Slots\r\n"
+                  },
+                  "name": "text - 5"
+                },
+                {
+                  "type": 12,
+                  "content": {
+                    "version": "NotebookGroup/1.0",
+                    "groupType": "editable",
+                    "items": [
+                      {
+                        "type": 1,
+                        "content": {
+                          "json": "## CPU Time by App "
+                        },
+                        "name": "text - 6"
+                      },
+                      {
+                        "type": 10,
+                        "content": {
+                          "chartId": "workbook8d7870a8-9f53-486c-8f11-270d78c3bc8f",
+                          "version": "MetricsItem/2.0",
+                          "size": 0,
+                          "chartType": 2,
+                          "resourceType": "microsoft.web/sites/slots",
+                          "metricScope": 0,
+                          "resourceParameter": "AppServiceIds",
+                          "resourceIds": [
+                            "{AppServiceIds}"
+                          ],
+                          "timeContext": {
+                            "durationMs": 604800000
+                          },
+                          "metrics": [],
+                          "gridSettings": {
+                            "rowLimit": 10000
+                          }
+                        },
+                        "name": "metric - 5"
+                      }
+                    ]
+                  },
+                  "customWidth": "33",
+                  "name": "CpuTimeByApp"
+                },
+                {
+                  "type": 12,
+                  "content": {
+                    "version": "NotebookGroup/1.0",
+                    "groupType": "editable",
+                    "items": [
+                      {
+                        "type": 1,
+                        "content": {
+                          "json": "## Private Bytes by App"
+                        },
+                        "name": "text - 7"
+                      },
+                      {
+                        "type": 10,
+                        "content": {
+                          "chartId": "workbook8d7870a8-9f53-486c-8f11-270d78c3bc8f",
+                          "version": "MetricsItem/2.0",
+                          "size": 0,
+                          "chartType": 2,
+                          "resourceType": "microsoft.web/sites/slots",
+                          "metricScope": 0,
+                          "resourceParameter": "AppServiceIds",
+                          "resourceIds": [
+                            "{AppServiceIds}"
+                          ],
+                          "timeContext": {
+                            "durationMs": 604800000
+                          },
+                          "metrics": [],
+                          "gridSettings": {
+                            "rowLimit": 10000
+                          }
+                        },
+                        "name": "metric - 5 - Copy"
+                      }
+                    ]
+                  },
+                  "customWidth": "33",
+                  "name": "PrivateBytesByApp"
+                },
+                {
+                  "type": 12,
+                  "content": {
+                    "version": "NotebookGroup/1.0",
+                    "groupType": "editable",
+                    "items": [
+                      {
+                        "type": 1,
+                        "content": {
+                          "json": "## Requests by App"
+                        },
+                        "name": "text - 9"
+                      },
+                      {
+                        "type": 10,
+                        "content": {
+                          "chartId": "workbooke4de478c-6d77-4f44-be4b-53e583515219",
+                          "version": "MetricsItem/2.0",
+                          "size": 0,
+                          "chartType": 2,
+                          "resourceType": "microsoft.web/sites/slots",
+                          "metricScope": 0,
+                          "resourceParameter": "AppServiceIds",
+                          "resourceIds": [
+                            "{AppServiceIds}"
+                          ],
+                          "timeContext": {
+                            "durationMs": 604800000
+                          },
+                          "metrics": [],
+                          "gridSettings": {
+                            "rowLimit": 10000
+                          }
+                        },
+                        "name": "metric - 9"
+                      }
+                    ]
+                  },
+                  "customWidth": "33",
+                  "name": "RequestsByApp"
+                }
+              ]
+            },
+            "conditionalVisibilities": [
+              {
+                "parameterName": "SelectedTab",
+                "comparison": "isEqualTo",
+                "value": "2"
+              },
+              {
+                "parameterName": "AppServicePlan",
+                "comparison": "isNotEqualTo",
+                "value": ""
+              }
+            ],
+            "name": "SelectedAppServicePlan - Copy"
           }
         ],
         "exportParameters": true
@@ -641,7 +798,7 @@
     }
   ],
   "fallbackResourceIds": [
-    "Azure Monitor"
+    "azure monitor"
   ],
   "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
 }
