@@ -676,7 +676,14 @@
                           "timeContext": {
                             "durationMs": 604800000
                           },
-                          "metrics": [],
+                          "metrics": [
+                            {
+                              "namespace": "microsoft.web/sites/slots",
+                              "metric": "microsoft.web/sites/slots--CpuTime",
+                              "aggregation": 1,
+                              "splitBy": null
+                            }
+                          ],
                           "gridSettings": {
                             "rowLimit": 10000
                           }
@@ -717,7 +724,14 @@
                           "timeContext": {
                             "durationMs": 604800000
                           },
-                          "metrics": [],
+                          "metrics": [
+                            {
+                              "namespace": "microsoft.web/sites/slots",
+                              "metric": "microsoft.web/sites/slots--PrivateBytes",
+                              "aggregation": 4,
+                              "splitBy": null
+                            }
+                          ],
                           "gridSettings": {
                             "rowLimit": 10000
                           }
@@ -758,7 +772,14 @@
                           "timeContext": {
                             "durationMs": 604800000
                           },
-                          "metrics": [],
+                          "metrics": [
+                            {
+                              "namespace": "microsoft.web/sites/slots",
+                              "metric": "microsoft.web/sites/slots--Requests",
+                              "aggregation": 1,
+                              "splitBy": null
+                            }
+                          ],
                           "gridSettings": {
                             "rowLimit": 10000
                           }
