@@ -24,6 +24,60 @@
             "value": [
               "/subscriptions/f9ca16c3-50f4-4012-a2ee-4bc1efeffbf0"
             ]
+          },
+          {
+            "id": "2a31f71c-200a-43b4-b77a-0fe5f145f610",
+            "version": "KqlParameterItem/1.0",
+            "name": "MetricsTimeWindow",
+            "label": "Metrics Time Window",
+            "type": 4,
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2419200000
+                },
+                {
+                  "durationMs": 2592000000
+                },
+                {
+                  "durationMs": 5184000000
+                },
+                {
+                  "durationMs": 7776000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "value": {
+              "durationMs": 3600000
+            }
           }
         ],
         "style": "pills",
@@ -406,9 +460,7 @@
               "version": "KqlItem/1.0",
               "query": "let AllApps = datatable(ResourceId: string) {AppServiceIdsJsonString} | project ResourceId = toupper(ResourceId);\r\nlet Metrics = AzureMetrics | where ResourceProvider == \"MICROSOFT.WEB\" and (MetricName == \"CpuTime\" or MetricName == \"PrivateBytes\" or MetricName == \"AppConnections\" or MetricName == \"Requests\") | summarize Amount = avg(Average) by MetricName, ResourceId | evaluate pivot(MetricName, avg(Amount), ResourceId);\r\nAllApps \r\n| join kind=leftouter Metrics on $left.ResourceId == $right.ResourceId\r\n| project \r\n    App = ResourceId,  \r\n    AverageCpuTimePerMinute = coalesce(tolong(column_ifexists(\"CpuTime\", 0)), 0), \r\n    AveragePrivateBytes = coalesce(tolong(column_ifexists(\"PrivateBytes\", 0)), 0), \r\n    AverageRequestsPerMinute = coalesce(tolong(column_ifexists(\"Requests\", 0)), 0)\r\n",
               "size": 0,
-              "timeContext": {
-                "durationMs": 259200000
-              },
+              "timeContextFromParameter": "MetricsTimeWindow",
               "queryType": 0,
               "resourceType": "microsoft.web/sites",
               "crossComponentResources": [
