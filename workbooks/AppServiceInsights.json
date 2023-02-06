@@ -313,7 +313,7 @@
                   },
                   {
                     "columnMatch": "app_ids",
-                    "formatter": 1,
+                    "formatter": 5,
                     "formatOptions": {
                       "workbookContext": {
                         "componentIdSource": "workbook",
