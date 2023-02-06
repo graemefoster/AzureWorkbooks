@@ -76,7 +76,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinid = toupper(id)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, capacity = sku.capacity, aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n) on $left.aseJoinid == $right.aseJoinId\r\n| project aseId = aseJoinId, aspId = aspJoinId, instances = toint(capacity)\r\n| summarize aspCount = count(), totalInstances = sum(instances) by aseId\r\n| extend remaining_instances = 200 - totalInstances\r\n| order by totalInstances desc\r\n\r\n",
+              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinid = toupper(id), vnetJoinId = toupper(properties.virtualNetwork.id)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | where properties.hostingEnvironmentId != \"\"\r\n    | extend  aseJoinId = toupper(properties.hostingEnvironmentId)\r\n    | summarize aspCount = count(), totalInstances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinid == $right.aseJoinId\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.network/virtualnetworks\"\r\n    | mv-expand subnet = properties.subnets\r\n    | project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n    | project \r\n        vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n        cidrRange,\r\n        availableIpAddresses = pow(2, (32 - cidrRange)) - 5 //https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n) on $left.vnetJoinId == $right.vnetJoinId\r\n| project \r\n    aseId = aseJoinId, \r\n    totalInstances = totalInstances, \r\n    remaining_instances = 200 - totalInstances, \r\n    totalSubnetIpAddresses = availableIpAddresses,\r\n    cidrRange\r\n| order by totalInstances desc\r\n",
               "size": 1,
               "queryType": 1,
               "resourceType": "microsoft.resourcegraph/resources",
@@ -85,10 +85,6 @@
               ],
               "gridSettings": {
                 "formatters": [
-                  {
-                    "columnMatch": "aspCount",
-                    "formatter": 5
-                  },
                   {
                     "columnMatch": "remaining_instances",
                     "formatter": 22,
@@ -107,12 +103,20 @@
                         ]
                       }
                     }
+                  },
+                  {
+                    "columnMatch": "cidrRange",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "aspCount",
+                    "formatter": 5
                   }
                 ],
                 "sortBy": [
                   {
-                    "itemKey": "totalInstances",
-                    "sortOrder": 2
+                    "itemKey": "$gen_compositeBar_remaining_instances_2",
+                    "sortOrder": 1
                   }
                 ],
                 "labelSettings": [
@@ -121,19 +125,19 @@
                     "label": "ASE"
                   },
                   {
-                    "columnId": "totalInstances",
-                    "label": "Instances used"
-                  },
-                  {
                     "columnId": "remaining_instances",
                     "label": "Instances Status "
+                  },
+                  {
+                    "columnId": "totalSubnetIpAddresses",
+                    "label": "Subnet Size"
                   }
                 ]
               },
               "sortBy": [
                 {
-                  "itemKey": "totalInstances",
-                  "sortOrder": 2
+                  "itemKey": "$gen_compositeBar_remaining_instances_2",
+                  "sortOrder": 1
                 }
               ]
             },
