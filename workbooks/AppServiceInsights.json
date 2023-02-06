@@ -455,7 +455,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "let AllApps = datatable(ResourceId: string) {AppServiceIdsJsonString} | project ResourceId = toupper(ResourceId);\r\nlet TotalMetrics = AzureMetrics \r\n    | extend appJoinId = toupper(ResourceId)\r\n    | join kind=inner AllApps on $left.appJoinId == $right.ResourceId\r\n    | where ResourceProvider == \"MICROSOFT.WEB\" and (MetricName == \"CpuTime\" or MetricName == \"Requests\") \r\n    | summarize Amount = sum(Total) by MetricName, ResourceId | evaluate pivot(MetricName, avg(Amount), ResourceId);\r\nlet AverageMetrics = AzureMetrics \r\n    | extend appJoinId = toupper(ResourceId)\r\n    | join kind=inner AllApps on $left.appJoinId == $right.ResourceId\r\n    | where ResourceProvider == \"MICROSOFT.WEB\" and (MetricName == \"PrivateBytes\" or MetricName == \"AppConnections\") \r\n    | summarize Amount = avg(Average) by MetricName, ResourceId | evaluate pivot(MetricName, avg(Amount), ResourceId);\r\nAllApps \r\n| join kind=leftouter TotalMetrics on $left.ResourceId == $right.ResourceId\r\n| join kind=leftouter AverageMetrics on $left.ResourceId == $right.ResourceId\r\n| project \r\n    App = ResourceId,  \r\n    AverageCpuTimePerMinute = coalesce(tolong(column_ifexists(\"CpuTime\", 0)), 0), \r\n    AveragePrivateBytes = coalesce(tolong(column_ifexists(\"PrivateBytes\", 0)), 0), \r\n    AverageRequestsPerMinute = coalesce(tolong(column_ifexists(\"Requests\", 0)), 0)\r\n",
+              "query": "let AllApps = datatable(ResourceId: string) {AppServiceIdsJsonString} | project ResourceId = toupper(ResourceId);\r\nlet TotalMetrics = AzureMetrics \r\n    | extend appJoinId = toupper(ResourceId)\r\n    | join kind=inner AllApps on $left.appJoinId == $right.ResourceId\r\n    | where ResourceProvider == \"MICROSOFT.WEB\" and (MetricName == \"CpuTime\" or MetricName == \"Requests\") \r\n    | summarize Amount = sum(Total) by MetricName, ResourceId | evaluate pivot(MetricName, avg(Amount), ResourceId);\r\nlet AverageMetrics = AzureMetrics \r\n    | extend appJoinId = toupper(ResourceId)\r\n    | join kind=inner AllApps on $left.appJoinId == $right.ResourceId\r\n    | where ResourceProvider == \"MICROSOFT.WEB\" and (MetricName == \"PrivateBytes\" or MetricName == \"AppConnections\") \r\n    | summarize Amount = avg(Average) by MetricName, ResourceId | evaluate pivot(MetricName, avg(Amount), ResourceId);\r\nAllApps \r\n| join kind=leftouter TotalMetrics on $left.ResourceId == $right.ResourceId\r\n| join kind=leftouter AverageMetrics on $left.ResourceId == $right.ResourceId\r\n| project \r\n    App = ResourceId,  \r\n    TotalCpuTime = coalesce(tolong(column_ifexists(\"CpuTime\", 0)), 0), \r\n    AveragePrivateBytes = coalesce(tolong(column_ifexists(\"PrivateBytes\", 0)), 0), \r\n    TotalRequests = coalesce(tolong(column_ifexists(\"Requests\", 0)), 0)\r\n",
               "size": 0,
               "timeContextFromParameter": "MetricsTimeWindow",
               "queryType": 0,
@@ -506,6 +506,20 @@
                     "formatOptions": {
                       "palette": "orangeRed"
                     }
+                  }
+                ],
+                "labelSettings": [
+                  {
+                    "columnId": "TotalCpuTime",
+                    "label": "Total CPU Time"
+                  },
+                  {
+                    "columnId": "AveragePrivateBytes",
+                    "label": "Average Private Bytes"
+                  },
+                  {
+                    "columnId": "TotalRequests",
+                    "label": "Total Requests"
                   }
                 ]
               },
