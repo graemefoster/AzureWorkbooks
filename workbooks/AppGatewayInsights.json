@@ -31,6 +31,41 @@
       "name": "parameters - 0"
     },
     {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "0a8408f8-ab8f-49da-8565-d8ec677002af",
+            "version": "KqlParameterItem/1.0",
+            "name": "SelectedAppGatewayVNetId",
+            "type": 1,
+            "isGlobal": true,
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "value": ""
+          },
+          {
+            "id": "bf571ba5-fef2-4d47-917a-cfa085f3a257",
+            "version": "KqlParameterItem/1.0",
+            "name": "SelectedAppGatewaySubnetName",
+            "type": 1,
+            "isGlobal": true,
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 86400000
+            }
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters - 3"
+    },
+    {
       "type": 12,
       "content": {
         "version": "NotebookGroup/1.0",
@@ -47,9 +82,11 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.network/applicationgateways\"\r\n| extend\r\n    used_backend_pools = array_length(properties.backendAddressPools),\r\n    total_backend_pools = 100,\r\n    used_http_settings = array_length(properties.backendHttpSettingsCollection),\r\n    total_http_settings = 100,\r\n    used_http_listeners = array_length(properties.httpListeners),\r\n    total_http_listeners = 100\r\n| extend\r\n    remaining_backend_pools = total_backend_pools - used_backend_pools,\r\n    remaining_http_settings = total_http_settings - used_http_settings,\r\n    remaining_http_listeners = total_http_listeners - used_http_listeners\r\n| project \r\n    id, \r\n    V2 = iff(toupper(properties.sku.tier) contains \"V2\", \"✓\", \"\"),\r\n    WAF = iff(toupper(properties.sku.tier) contains \"WAF\", \"✓\", \"\"),\r\n    used_backend_pools,\r\n    used_http_settings,\r\n    used_http_listeners,\r\n    remaining_backend_pools,\r\n    remaining_http_settings,\r\n    remaining_http_listeners,\r\n    status = case(\r\n        remaining_backend_pools == 0, \"critical\", \r\n        remaining_http_settings == 0, \"critical\",\r\n        remaining_http_listeners == 0, \"critical\",\r\n        remaining_backend_pools < 10, \"warning\", \r\n        remaining_http_settings < 10, \"warning\",\r\n        remaining_http_listeners < 10, \"warning\",\r\n        remaining_backend_pools < 20, \"success\", \r\n        remaining_http_settings < 20, \"success\",\r\n        remaining_http_listeners < 20, \"success\",\r\n        \"success\")\r\n| order by status asc",
+              "query": "resources\r\n| where type == \"microsoft.network/applicationgateways\"\r\n| extend\r\n    used_backend_pools = array_length(properties.backendAddressPools),\r\n    total_backend_pools = 100,\r\n    used_http_settings = array_length(properties.backendHttpSettingsCollection),\r\n    total_http_settings = 100,\r\n    used_http_listeners = array_length(properties.httpListeners),\r\n    total_http_listeners = 100,\r\n    autoScale = not(isempty(properties.autoscaleConfiguration)),\r\n    minInstances = iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.minCapacity),\r\n    maxInstances = iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.maxCapacity),\r\n    vnetId = case(  not(isempty(properties.frontendIPConfigurations[0].properties.subnet)), properties.frontendIPConfigurations[0].properties.subnet.id,\r\n                    array_length(properties.frontendIPConfigurations) > 1 and not(isempty(properties.frontendIPConfigurations[1].properties.subnet)), properties.frontendIPConfigurations[1].properties.subnet.id,\r\n                    \"\")\r\n| extend\r\n    remaining_backend_pools = total_backend_pools - used_backend_pools,\r\n    remaining_http_settings = total_http_settings - used_http_settings,\r\n    remaining_http_listeners = total_http_listeners - used_http_listeners,\r\n    vnet_parts = split(vnetId, '/')\r\n| project \r\n    id, \r\n    vnetId = iif(isempty(vnetId), \"\", strcat('/', strcat_array(array_slice(vnet_parts, 1, 8), '/'))),\r\n    V2 = iff(toupper(properties.sku.tier) contains \"V2\", \"✓\", \"\"),\r\n    WAF = iff(toupper(properties.sku.tier) contains \"WAF\", \"✓\", \"\"),\r\n    AutoScale = iff(autoScale, \"✓\", \"\"),\r\n    minInstances,\r\n    maxInstances,\r\n    used_backend_pools,\r\n    used_http_settings,\r\n    used_http_listeners,\r\n    remaining_backend_pools,\r\n    remaining_http_settings,\r\n    remaining_http_listeners,\r\n    resourceGroup,\r\n    subnetName = iif(isempty(vnetId), \"\", vnet_parts[10])\r\n",
               "size": 0,
               "noDataMessage": "No application gateways found in the selected subscription",
+              "exportFieldName": "vnetId",
+              "exportParameterName": "SelectedAppGatewayVNetId",
               "queryType": 1,
               "resourceType": "microsoft.resourcegraph/resources",
               "crossComponentResources": [
@@ -57,6 +94,14 @@
               ],
               "gridSettings": {
                 "formatters": [
+                  {
+                    "columnMatch": "vnetId",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": "Resource",
+                      "showIcon": true
+                    }
+                  },
                   {
                     "columnMatch": "used_backend_pools",
                     "formatter": 22,
@@ -181,6 +226,14 @@
                     }
                   },
                   {
+                    "columnMatch": "resourceGroup",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "subnetName",
+                    "formatter": 5
+                  },
+                  {
                     "columnMatch": "status",
                     "formatter": 11,
                     "numberFormat": {
@@ -191,16 +244,22 @@
                     }
                   }
                 ],
-                "sortBy": [
-                  {
-                    "itemKey": "$gen_compositeBar_used_http_listeners_5",
-                    "sortOrder": 2
-                  }
-                ],
                 "labelSettings": [
                   {
                     "columnId": "id",
                     "label": "Gateway"
+                  },
+                  {
+                    "columnId": "vnetId",
+                    "label": "Virtual Network"
+                  },
+                  {
+                    "columnId": "minInstances",
+                    "label": "Min Instances"
+                  },
+                  {
+                    "columnId": "maxInstances",
+                    "label": "Max Instances"
                   },
                   {
                     "columnId": "used_backend_pools",
@@ -225,19 +284,10 @@
                   {
                     "columnId": "remaining_http_listeners",
                     "label": "Http Listeners Status"
-                  },
-                  {
-                    "columnId": "status",
-                    "label": "Status"
                   }
                 ]
               },
-              "sortBy": [
-                {
-                  "itemKey": "$gen_compositeBar_used_http_listeners_5",
-                  "sortOrder": 2
-                }
-              ]
+              "sortBy": []
             },
             "name": "query - 1"
           }
@@ -247,7 +297,7 @@
     }
   ],
   "fallbackResourceIds": [
-    "azure monitor"
+    "Azure Monitor"
   ],
   "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
 }
