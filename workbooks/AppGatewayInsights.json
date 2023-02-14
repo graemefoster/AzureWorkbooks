@@ -21,9 +21,7 @@
             "timeContext": {
               "durationMs": 86400000
             },
-            "value": [
-              "/subscriptions/f9ca16c3-50f4-4012-a2ee-4bc1efeffbf0"
-            ]
+            "value": []
           }
         ],
         "style": "pills",
@@ -249,7 +247,7 @@
     }
   ],
   "fallbackResourceIds": [
-    "Azure Monitor"
+    "azure monitor"
   ],
   "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
 }
