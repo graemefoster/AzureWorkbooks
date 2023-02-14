@@ -21,8 +21,7 @@
             "timeContext": {
               "durationMs": 86400000
             },
-            "value": [
-            ]
+            "value": []
           }
         ],
         "style": "pills",
@@ -48,7 +47,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.network/virtualnetworks\"\r\n| mv-expand subnet = properties.subnets\r\n| project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n| project \r\n    vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n    cidrRange,\r\n    availableIpAddresses = toint(pow(2, (32 - cidrRange)) - 5) //5 used by Microsoft: https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n| join kind=inner (\r\n    resources\r\n    | where type == \"microsoft.network/applicationgateways\"\r\n    | project\r\n        minInstances = 1 + toint(iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.minCapacity)), //1 for the private ip we listen on\r\n        maxInstances = 1 + toint(iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.maxCapacity)), //1 for the private ip we listen on\r\n        subnetId = case(    not(isempty(properties.frontendIPConfigurations[0].properties.subnet)), properties.frontendIPConfigurations[0].properties.subnet.id,\r\n                            array_length(properties.frontendIPConfigurations) > 1 and not(isempty(properties.frontendIPConfigurations[1].properties.subnet)), properties.frontendIPConfigurations[1].properties.subnet.id,\r\n                            \"\")\r\n    | summarize minimumIpAddressesUsedInSubnet = toint(sum(minInstances)), maximumIpAddressesUsedInSubnet = toint(sum(maxInstances)), gatewayCount = count() by subnetId = toupper(subnetId)\r\n) on $left.vnetJoinId == $right.subnetId\r\n| project \r\n    vnetJoinId,\r\n    subnetId,\r\n    availableIpAddresses,\r\n    gatewayCount,\r\n    maxUsedIpAddresses = iif(isempty(subnetId), 0, maximumIpAddressesUsedInSubnet),\r\n    minAvailableIpAddresses = iif(isempty(subnetId), 0, availableIpAddresses - maximumIpAddressesUsedInSubnet),\r\n    minIpAddressesUsedSubnet = iif(isempty(subnetId), 0, minimumIpAddressesUsedInSubnet),\r\n    additionalPossibleGatewayUsedIpAddresses = iif(isempty(subnetId), 0, maximumIpAddressesUsedInSubnet - minimumIpAddressesUsedInSubnet)",
+              "query": "resources\r\n| where type == \"microsoft.network/virtualnetworks\"\r\n| mv-expand subnet = properties.subnets\r\n| project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n| project \r\n    vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n    cidrRange,\r\n    availableIpAddresses = toint(pow(2, (32 - cidrRange)) - 5) //5 used by Microsoft: https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n| join kind=inner (\r\n    resources\r\n    | where type == \"microsoft.network/applicationgateways\"\r\n    | project\r\n        minInstances = toint(iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.minCapacity)), //1 for the private ip we listen on\r\n        maxInstances = toint(iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.maxCapacity)), //1 for the private ip we listen on\r\n        subnetId = case(    not(isempty(properties.frontendIPConfigurations[0].properties.subnet)), properties.frontendIPConfigurations[0].properties.subnet.id,\r\n                            array_length(properties.frontendIPConfigurations) > 1 and not(isempty(properties.frontendIPConfigurations[1].properties.subnet)), properties.frontendIPConfigurations[1].properties.subnet.id,\r\n                            \"\")\r\n    | extend\r\n        privateIpListeners = iif(isempty(subnetId), 0, 1)\r\n    | summarize minimumIpAddressesUsedInSubnet = sum(minInstances), maximumIpAddressesUsedInSubnet = sum(maxInstances), privateIpListenerCount = sum(privateIpListeners), gatewayCount = count() by subnetId = toupper(subnetId)\r\n) on $left.vnetJoinId == $right.subnetId\r\n| project \r\n    vnetJoinId,\r\n    subnetId,\r\n    availableIpAddresses,\r\n    gatewayCount,\r\n    privateIpListenerCount,\r\n    maxUsedIpAddresses = iif(isempty(subnetId), 0, maximumIpAddressesUsedInSubnet),\r\n    minAvailableIpAddresses = iif(isempty(subnetId), 0, availableIpAddresses - maximumIpAddressesUsedInSubnet - privateIpListenerCount),\r\n    minIpAddressesUsedSubnet = iif(isempty(subnetId), 0, minimumIpAddressesUsedInSubnet),\r\n    additionalPossibleGatewayUsedIpAddresses = iif(isempty(subnetId), 0, maximumIpAddressesUsedInSubnet - minimumIpAddressesUsedInSubnet)",
               "size": 0,
               "noDataMessage": "No application gateways found in the selected subscription",
               "exportFieldName": "subnetId",
@@ -65,12 +64,20 @@
                     "formatter": 5
                   },
                   {
+                    "columnMatch": "privateIpListenerCount",
+                    "formatter": 5
+                  },
+                  {
                     "columnMatch": "maxUsedIpAddresses",
                     "formatter": 22,
                     "formatOptions": {
                       "compositeBarSettings": {
-                        "labelText": "Between [\"minIpAddressesUsedSubnet\"]  and [\"maxUsedIpAddresses\"]",
+                        "labelText": "[\"privateIpListenerCount\"] listener(s) + between [\"minIpAddressesUsedSubnet\"]  and [\"maxUsedIpAddresses\"] worker[s]",
                         "columnSettings": [
+                          {
+                            "columnName": "privateIpListenerCount",
+                            "color": "orange"
+                          },
                           {
                             "columnName": "minIpAddressesUsedSubnet",
                             "color": "redBright"
