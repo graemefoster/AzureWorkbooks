@@ -40,6 +40,123 @@
           {
             "type": 1,
             "content": {
+              "json": "# Application Gateway Subnet Usage\r\n\r\nMultiple Application Gateways can reside in a subnet. This table shows you how many Gateways are in your subnets, as-well as the minimum / maximum IP addresses they can consume based on capacity / auto-scale rules."
+            },
+            "name": "text - 3"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "resources\r\n| where type == \"microsoft.network/virtualnetworks\"\r\n| mv-expand subnet = properties.subnets\r\n| project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n| project \r\n    vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n    cidrRange,\r\n    availableIpAddresses = toint(pow(2, (32 - cidrRange)) - 5) //5 used by Microsoft: https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n| join kind=inner (\r\n    resources\r\n    | where type == \"microsoft.network/applicationgateways\"\r\n    | project\r\n        minInstances = 1 + toint(iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.minCapacity)), //1 for the private ip we listen on\r\n        maxInstances = 1 + toint(iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.maxCapacity)), //1 for the private ip we listen on\r\n        subnetId = case(    not(isempty(properties.frontendIPConfigurations[0].properties.subnet)), properties.frontendIPConfigurations[0].properties.subnet.id,\r\n                            array_length(properties.frontendIPConfigurations) > 1 and not(isempty(properties.frontendIPConfigurations[1].properties.subnet)), properties.frontendIPConfigurations[1].properties.subnet.id,\r\n                            \"\")\r\n    | summarize minimumIpAddressesUsedInSubnet = toint(sum(minInstances)), maximumIpAddressesUsedInSubnet = toint(sum(maxInstances)), gatewayCount = count() by subnetId = toupper(subnetId)\r\n) on $left.vnetJoinId == $right.subnetId\r\n| project \r\n    vnetJoinId,\r\n    subnetId,\r\n    availableIpAddresses,\r\n    gatewayCount,\r\n    maxUsedIpAddresses = iif(isempty(subnetId), 0, maximumIpAddressesUsedInSubnet),\r\n    minAvailableIpAddresses = iif(isempty(subnetId), 0, availableIpAddresses - maximumIpAddressesUsedInSubnet),\r\n    minIpAddressesUsedSubnet = iif(isempty(subnetId), 0, minimumIpAddressesUsedInSubnet),\r\n    additionalPossibleGatewayUsedIpAddresses = iif(isempty(subnetId), 0, maximumIpAddressesUsedInSubnet - minimumIpAddressesUsedInSubnet)",
+              "size": 0,
+              "noDataMessage": "No application gateways found in the selected subscription",
+              "exportFieldName": "subnetId",
+              "exportParameterName": "SelectedSubnetId",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "vnetJoinId",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "maxUsedIpAddresses",
+                    "formatter": 22,
+                    "formatOptions": {
+                      "compositeBarSettings": {
+                        "labelText": "Between [\"minIpAddressesUsedSubnet\"]  and [\"maxUsedIpAddresses\"]",
+                        "columnSettings": [
+                          {
+                            "columnName": "minIpAddressesUsedSubnet",
+                            "color": "redBright"
+                          },
+                          {
+                            "columnName": "additionalPossibleGatewayUsedIpAddresses",
+                            "color": "yellow"
+                          },
+                          {
+                            "columnName": "minAvailableIpAddresses",
+                            "color": "green"
+                          }
+                        ],
+                        "noRowsScaling": true
+                      }
+                    }
+                  },
+                  {
+                    "columnMatch": "minAvailableIpAddresses",
+                    "formatter": 5,
+                    "formatOptions": {
+                      "compositeBarSettings": {
+                        "labelText": "",
+                        "columnSettings": [],
+                        "noRowsScaling": true
+                      }
+                    }
+                  },
+                  {
+                    "columnMatch": "minIpAddressesUsedSubnet",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "additionalPossibleGatewayUsedIpAddresses",
+                    "formatter": 5
+                  }
+                ],
+                "labelSettings": [
+                  {
+                    "columnId": "subnetId",
+                    "label": "Subnet"
+                  },
+                  {
+                    "columnId": "availableIpAddresses",
+                    "label": "Subnet Size"
+                  },
+                  {
+                    "columnId": "gatewayCount",
+                    "label": "Gateways Count"
+                  },
+                  {
+                    "columnId": "maxUsedIpAddresses",
+                    "label": "Subnet IP Usage"
+                  }
+                ]
+              },
+              "sortBy": []
+            },
+            "name": "query - 1 - Copy"
+          },
+          {
+            "type": 9,
+            "content": {
+              "version": "KqlParameterItem/1.0",
+              "parameters": [
+                {
+                  "id": "43004770-5ca3-4b2c-829f-1c856a27076c",
+                  "version": "KqlParameterItem/1.0",
+                  "name": "SelectedSubnetId",
+                  "type": 1,
+                  "isGlobal": true,
+                  "isHiddenWhenLocked": true,
+                  "timeContext": {
+                    "durationMs": 86400000
+                  }
+                }
+              ],
+              "style": "pills",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces"
+            },
+            "name": "parameters - 4"
+          },
+          {
+            "type": 1,
+            "content": {
               "json": "# Application Gateways\r\n\r\nApplication Gateways have internal limits related to the number of Listeners, Backend Pools, amongst others. This query shows you how far you are from exhausting some of these limits."
             },
             "name": "text - 0"
@@ -48,7 +165,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.network/applicationgateways\"\r\n| extend\r\n    used_backend_pools = array_length(properties.backendAddressPools),\r\n    total_backend_pools = 100,\r\n    used_http_settings = array_length(properties.backendHttpSettingsCollection),\r\n    total_http_settings = 100,\r\n    used_http_listeners = array_length(properties.httpListeners),\r\n    total_http_listeners = 100,\r\n    autoScale = not(isempty(properties.autoscaleConfiguration)),\r\n    minInstances = iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.minCapacity),\r\n    maxInstances = iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.maxCapacity),\r\n    subnetId = case(  not(isempty(properties.frontendIPConfigurations[0].properties.subnet)), properties.frontendIPConfigurations[0].properties.subnet.id,\r\n                    array_length(properties.frontendIPConfigurations) > 1 and not(isempty(properties.frontendIPConfigurations[1].properties.subnet)), properties.frontendIPConfigurations[1].properties.subnet.id,\r\n                    \"\"),\r\n    privateIpAddress = case(  not(isempty(properties.frontendIPConfigurations[0].properties.subnet)), properties.frontendIPConfigurations[0].properties.privateIPAddress,\r\n                    array_length(properties.frontendIPConfigurations) > 1 and not(isempty(properties.frontendIPConfigurations[1].properties.subnet)), properties.frontendIPConfigurations[1].properties.privateIPAddress,\r\n                    \"\")\r\n| extend\r\n    remaining_backend_pools = total_backend_pools - used_backend_pools,\r\n    remaining_http_settings = total_http_settings - used_http_settings,\r\n    remaining_http_listeners = total_http_listeners - used_http_listeners,\r\n    vnet_parts = split(subnetId, '/')\r\n| extend\r\n    vnetId =  iif(isempty(subnetId), \"\", strcat('/', strcat_array(array_slice(vnet_parts, 1, 8), '/'))),\r\n    subnetId = toupper(subnetId)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.network/applicationgateways\"\r\n    | project\r\n        minInstances = 1 + toint(iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.minCapacity)), //1 for the private ip we listen on\r\n        maxInstances = 1 + toint(iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.maxCapacity)), //1 for the private ip we listen on\r\n        subnetId = case(    not(isempty(properties.frontendIPConfigurations[0].properties.subnet)), properties.frontendIPConfigurations[0].properties.subnet.id,\r\n                            array_length(properties.frontendIPConfigurations) > 1 and not(isempty(properties.frontendIPConfigurations[1].properties.subnet)), properties.frontendIPConfigurations[1].properties.subnet.id,\r\n                            \"\")\r\n    | summarize minimumIpAddressesUsedInSubnet = toint(sum(minInstances)), maximumIpAddressesUsedInSubnet = toint(sum(maxInstances)) by subnetId = toupper(subnetId)\r\n) on $left.subnetId == $right.subnetId\r\n| project \r\n    id, \r\n    vnetId,\r\n    subnetId,\r\n    privateIpAddress,\r\n    V2 = iff(toupper(properties.sku.tier) contains \"V2\", \"✓\", \"\"),\r\n    WAF = iff(toupper(properties.sku.tier) contains \"WAF\", \"✓\", \"\"),\r\n    AutoScale = iff(autoScale, \"✓\", \"\"),\r\n    minInstances,\r\n    maxInstances,\r\n    used_backend_pools,\r\n    used_http_settings,\r\n    used_http_listeners,\r\n    remaining_backend_pools,\r\n    remaining_http_settings,\r\n    remaining_http_listeners,\r\n    resourceGroup,\r\n    subnetName = iif(isempty(subnetId), \"\", vnet_parts[10])\r\n",
+              "query": "resources\r\n| where type == \"microsoft.network/applicationgateways\"\r\n| extend\r\n    used_backend_pools = array_length(properties.backendAddressPools),\r\n    total_backend_pools = 100,\r\n    used_http_settings = array_length(properties.backendHttpSettingsCollection),\r\n    total_http_settings = 100,\r\n    used_http_listeners = array_length(properties.httpListeners),\r\n    total_http_listeners = 100,\r\n    autoScale = not(isempty(properties.autoscaleConfiguration)),\r\n    minInstances = iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.minCapacity),\r\n    maxInstances = iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.maxCapacity),\r\n    subnetId = case(  not(isempty(properties.frontendIPConfigurations[0].properties.subnet)), properties.frontendIPConfigurations[0].properties.subnet.id,\r\n                    array_length(properties.frontendIPConfigurations) > 1 and not(isempty(properties.frontendIPConfigurations[1].properties.subnet)), properties.frontendIPConfigurations[1].properties.subnet.id,\r\n                    \"\"),\r\n    privateIpAddress = case(  not(isempty(properties.frontendIPConfigurations[0].properties.subnet)), properties.frontendIPConfigurations[0].properties.privateIPAddress,\r\n                    array_length(properties.frontendIPConfigurations) > 1 and not(isempty(properties.frontendIPConfigurations[1].properties.subnet)), properties.frontendIPConfigurations[1].properties.privateIPAddress,\r\n                    \"\")\r\n| extend\r\n    remaining_backend_pools = total_backend_pools - used_backend_pools,\r\n    remaining_http_settings = total_http_settings - used_http_settings,\r\n    remaining_http_listeners = total_http_listeners - used_http_listeners,\r\n    vnet_parts = split(subnetId, '/')\r\n| extend\r\n    vnetId =  iif(isempty(subnetId), \"\", strcat('/', strcat_array(array_slice(vnet_parts, 1, 8), '/'))),\r\n    subnetId = toupper(subnetId)\r\n| where subnetId == \"{SelectedSubnetId}\" or isempty(\"{SelectedSubnetId}\")\r\n| project \r\n    id, \r\n    vnetId,\r\n    subnetId,\r\n    privateIpAddress,\r\n    V2 = iff(toupper(properties.sku.tier) contains \"V2\", \"✓\", \"\"),\r\n    WAF = iff(toupper(properties.sku.tier) contains \"WAF\", \"✓\", \"\"),\r\n    AutoScale = iff(autoScale, \"✓\", \"\"),\r\n    minInstances,\r\n    maxInstances,\r\n    used_backend_pools,\r\n    used_http_settings,\r\n    used_http_listeners,\r\n    remaining_backend_pools,\r\n    remaining_http_settings,\r\n    remaining_http_listeners,\r\n    resourceGroup,\r\n    subnetName = iif(isempty(subnetId), \"\", vnet_parts[10]),\r\n    test = \"{SelectedSubnetId}\"\r\n",
               "size": 0,
               "noDataMessage": "No application gateways found in the selected subscription",
               "queryType": 1,
@@ -251,100 +368,6 @@
               "sortBy": []
             },
             "name": "query - 1"
-          },
-          {
-            "type": 1,
-            "content": {
-              "json": "# Application Gateway Subnet Usage\r\n\r\nMultiple Application Gateways can reside in a subnet. This table shows you how many Gateways are in your subnets, as-well as the minimum / maximum IP addresses they can consume based on capacity / auto-scale rules."
-            },
-            "name": "text - 3"
-          },
-          {
-            "type": 3,
-            "content": {
-              "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.network/virtualnetworks\"\r\n| mv-expand subnet = properties.subnets\r\n| project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n| project \r\n    vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n    cidrRange,\r\n    availableIpAddresses = toint(pow(2, (32 - cidrRange)) - 5) //5 used by Microsoft: https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n| join kind=inner (\r\n    resources\r\n    | where type == \"microsoft.network/applicationgateways\"\r\n    | project\r\n        minInstances = 1 + toint(iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.minCapacity)), //1 for the private ip we listen on\r\n        maxInstances = 1 + toint(iif(isempty(properties.autoscaleConfiguration), properties.sku.capacity, properties.autoscaleConfiguration.maxCapacity)), //1 for the private ip we listen on\r\n        subnetId = case(    not(isempty(properties.frontendIPConfigurations[0].properties.subnet)), properties.frontendIPConfigurations[0].properties.subnet.id,\r\n                            array_length(properties.frontendIPConfigurations) > 1 and not(isempty(properties.frontendIPConfigurations[1].properties.subnet)), properties.frontendIPConfigurations[1].properties.subnet.id,\r\n                            \"\")\r\n    | summarize minimumIpAddressesUsedInSubnet = toint(sum(minInstances)), maximumIpAddressesUsedInSubnet = toint(sum(maxInstances)), gatewayCount = count() by subnetId = toupper(subnetId)\r\n) on $left.vnetJoinId == $right.subnetId\r\n| project \r\n    vnetJoinId,\r\n    subnetId,\r\n    availableIpAddresses,\r\n    gatewayCount,\r\n    maxUsedIpAddresses = iif(isempty(subnetId), 0, maximumIpAddressesUsedInSubnet),\r\n    minAvailableIpAddresses = iif(isempty(subnetId), 0, availableIpAddresses - maximumIpAddressesUsedInSubnet),\r\n    minIpAddressesUsedSubnet = iif(isempty(subnetId), 0, minimumIpAddressesUsedInSubnet),\r\n    additionalPossibleGatewayUsedIpAddresses = iif(isempty(subnetId), 0, maximumIpAddressesUsedInSubnet - minimumIpAddressesUsedInSubnet)",
-              "size": 0,
-              "noDataMessage": "No application gateways found in the selected subscription",
-              "exportFieldName": "vnetId",
-              "exportParameterName": "SelectedAppGatewayVNetId",
-              "queryType": 1,
-              "resourceType": "microsoft.resourcegraph/resources",
-              "crossComponentResources": [
-                "{Subscriptions}"
-              ],
-              "gridSettings": {
-                "formatters": [
-                  {
-                    "columnMatch": "vnetJoinId",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "maxUsedIpAddresses",
-                    "formatter": 22,
-                    "formatOptions": {
-                      "compositeBarSettings": {
-                        "labelText": "Between [\"minIpAddressesUsedSubnet\"]  and [\"maxUsedIpAddresses\"]",
-                        "columnSettings": [
-                          {
-                            "columnName": "minIpAddressesUsedSubnet",
-                            "color": "redBright"
-                          },
-                          {
-                            "columnName": "additionalPossibleGatewayUsedIpAddresses",
-                            "color": "yellow"
-                          },
-                          {
-                            "columnName": "minAvailableIpAddresses",
-                            "color": "green"
-                          }
-                        ],
-                        "noRowsScaling": true
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "minAvailableIpAddresses",
-                    "formatter": 5,
-                    "formatOptions": {
-                      "compositeBarSettings": {
-                        "labelText": "",
-                        "columnSettings": [],
-                        "noRowsScaling": true
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "minIpAddressesUsedSubnet",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "additionalPossibleGatewayUsedIpAddresses",
-                    "formatter": 5
-                  }
-                ],
-                "labelSettings": [
-                  {
-                    "columnId": "subnetId",
-                    "label": "Subnet"
-                  },
-                  {
-                    "columnId": "availableIpAddresses",
-                    "label": "Subnet Size"
-                  },
-                  {
-                    "columnId": "gatewayCount",
-                    "label": "Gateways Count"
-                  },
-                  {
-                    "columnId": "maxUsedIpAddresses",
-                    "label": "Subnet IP Usage"
-                  }
-                ]
-              },
-              "sortBy": []
-            },
-            "name": "query - 1 - Copy"
           }
         ]
       },
