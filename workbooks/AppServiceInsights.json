@@ -23,60 +23,6 @@
             },
             "value": [
             ]
-          },
-          {
-            "id": "2a31f71c-200a-43b4-b77a-0fe5f145f610",
-            "version": "KqlParameterItem/1.0",
-            "name": "MetricsTimeWindow",
-            "label": "Metrics Time Window",
-            "type": 4,
-            "typeSettings": {
-              "selectableValues": [
-                {
-                  "durationMs": 1800000
-                },
-                {
-                  "durationMs": 3600000
-                },
-                {
-                  "durationMs": 14400000
-                },
-                {
-                  "durationMs": 43200000
-                },
-                {
-                  "durationMs": 86400000
-                },
-                {
-                  "durationMs": 172800000
-                },
-                {
-                  "durationMs": 259200000
-                },
-                {
-                  "durationMs": 604800000
-                },
-                {
-                  "durationMs": 1209600000
-                },
-                {
-                  "durationMs": 2419200000
-                },
-                {
-                  "durationMs": 2592000000
-                },
-                {
-                  "durationMs": 5184000000
-                },
-                {
-                  "durationMs": 7776000000
-                }
-              ],
-              "allowCustom": true
-            },
-            "value": {
-              "durationMs": 604800000
-            }
           }
         ],
         "style": "pills",
@@ -112,6 +58,36 @@
       "name": "links - 11"
     },
     {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "0a37e0af-d3f6-490f-bdf3-58929aa8ba32",
+            "version": "KqlParameterItem/1.0",
+            "name": "app_ids",
+            "type": 5,
+            "isHiddenWhenLocked": true,
+            "typeSettings": {
+              "resourceTypeFilter": {
+                "microsoft.web/sites": true,
+                "microsoft.web/sites/slots": true
+              },
+              "additionalResourceOptions": []
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "value": null
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters - 7"
+    },
+    {
       "type": 12,
       "content": {
         "version": "NotebookGroup/1.0",
@@ -129,8 +105,15 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinid = toupper(id), vnetJoinId = toupper(properties.virtualNetwork.id)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | where properties.hostingEnvironmentId != \"\"\r\n    | extend  aseJoinId = toupper(properties.hostingEnvironmentId)\r\n    | summarize aspCount = count(), totalInstances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinid == $right.aseJoinId\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.network/virtualnetworks\"\r\n    | mv-expand subnet = properties.subnets\r\n    | project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n    | project \r\n        vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n        cidrRange,\r\n        availableIpAddresses = pow(2, (32 - cidrRange)) - 5 //https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n) on $left.vnetJoinId == $right.vnetJoinId\r\n| project \r\n    aseId = aseJoinId, \r\n    totalInstances = totalInstances, \r\n    remaining_instances = 200 - totalInstances, \r\n    totalSubnetIpAddresses = availableIpAddresses,\r\n    cidrRange\r\n| order by totalInstances desc\r\n",
+              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinid = toupper(id), vnetJoinId = toupper(properties.virtualNetwork.id)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | where properties.hostingEnvironmentId != \"\"\r\n    | extend  aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId=toupper(id)\r\n    | join kind=leftouter (\r\n        resources         \r\n        | where type == \"microsoft.web/sites\" or type == \"microsoft.web/sites/slots\"\r\n        | extend aspJoinId = toupper(properties.serverFarmId)\r\n        | summarize app_ids = makeset(id) by aspJoinId\r\n    ) on $left.aspJoinId == $right.aspJoinId\r\n    | summarize aspCount = count(), app_ids = makeset(app_ids), totalInstances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinid == $right.aseJoinId\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.network/virtualnetworks\"\r\n    | mv-expand subnet = properties.subnets\r\n    | project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n    | project \r\n        vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n        cidrRange,\r\n        availableIpAddresses = pow(2, (32 - cidrRange)) - 5 //https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n) on $left.vnetJoinId == $right.vnetJoinId\r\n| project \r\n    aseId = aseJoinId, \r\n    totalInstances = totalInstances, \r\n    remaining_instances = 200 - totalInstances, \r\n    totalSubnetIpAddresses = availableIpAddresses,\r\n    cidrRange,\r\n    app_ids\r\n| order by totalInstances desc\r\n",
               "size": 1,
+              "exportedParameters": [
+                {
+                  "fieldName": "app_ids",
+                  "parameterName": "app_ids",
+                  "parameterType": 5
+                }
+              ],
               "queryType": 1,
               "resourceType": "microsoft.resourcegraph/resources",
               "crossComponentResources": [
@@ -159,6 +142,10 @@
                   },
                   {
                     "columnMatch": "cidrRange",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "app_ids",
                     "formatter": 5
                   },
                   {
@@ -195,6 +182,137 @@
               ]
             },
             "name": "query - 3"
+          },
+          {
+            "type": 10,
+            "content": {
+              "chartId": "workbook0dfcecd6-6d95-430a-8a62-5ee8d8e6f54a",
+              "version": "MetricsItem/2.0",
+              "size": 0,
+              "chartType": 0,
+              "resourceType": "microsoft.web/sites",
+              "metricScope": 0,
+              "resourceParameter": "app_ids",
+              "resourceIds": [
+                "{app_ids}"
+              ],
+              "timeContext": {
+                "durationMs": 604800000
+              },
+              "metrics": [
+                {
+                  "namespace": "microsoft.web/sites",
+                  "metric": "microsoft.web/sites--AverageMemoryWorkingSet",
+                  "aggregation": 4
+                },
+                {
+                  "namespace": "microsoft.web/sites",
+                  "metric": "microsoft.web/sites--PrivateBytes",
+                  "aggregation": 4
+                },
+                {
+                  "namespace": "microsoft.web/sites",
+                  "metric": "microsoft.web/sites--CpuTime",
+                  "aggregation": 1
+                }
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Subscription",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "Name",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": "Resource",
+                      "showIcon": true
+                    }
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "coldHot"
+                    },
+                    "numberFormat": {
+                      "unit": 2,
+                      "options": {
+                        "style": "decimal"
+                      }
+                    }
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--PrivateBytes",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "coldHot"
+                    },
+                    "numberFormat": {
+                      "unit": 2,
+                      "options": {
+                        "style": "decimal"
+                      }
+                    }
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--PrivateBytes Timeline",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--CpuTime",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "coldHot"
+                    },
+                    "numberFormat": {
+                      "unit": 24,
+                      "options": {
+                        "style": "decimal"
+                      }
+                    }
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--CpuTime Timeline",
+                    "formatter": 5
+                  }
+                ],
+                "rowLimit": 10000,
+                "labelSettings": [
+                  {
+                    "columnId": "microsoft.web/sites--AverageMemoryWorkingSet",
+                    "label": "Average memory working set (Average)"
+                  },
+                  {
+                    "columnId": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
+                    "label": "Average memory working set Timeline"
+                  },
+                  {
+                    "columnId": "microsoft.web/sites--PrivateBytes",
+                    "label": "Private Bytes (Average)"
+                  },
+                  {
+                    "columnId": "microsoft.web/sites--PrivateBytes Timeline",
+                    "label": "Private Bytes Timeline"
+                  },
+                  {
+                    "columnId": "microsoft.web/sites--CpuTime",
+                    "label": "CPU Time (Sum)"
+                  },
+                  {
+                    "columnId": "microsoft.web/sites--CpuTime Timeline",
+                    "label": "CPU Time Timeline"
+                  }
+                ]
+              },
+              "sortBy": []
+            },
+            "name": "metric - 3"
           }
         ]
       },
@@ -333,12 +451,6 @@
                     "formatter": 5
                   }
                 ],
-                "sortBy": [
-                  {
-                    "itemKey": "appCount",
-                    "sortOrder": 2
-                  }
-                ],
                 "labelSettings": [
                   {
                     "columnId": "aseId",
@@ -378,12 +490,7 @@
                   }
                 ]
               },
-              "sortBy": [
-                {
-                  "itemKey": "appCount",
-                  "sortOrder": 2
-                }
-              ]
+              "sortBy": []
             },
             "name": "AppServicePlanOverview"
           },
@@ -451,81 +558,105 @@
             "name": "SelectedAppServicePlanSummary"
           },
           {
-            "type": 3,
+            "type": 10,
             "content": {
-              "version": "KqlItem/1.0",
-              "query": "let AllApps = datatable(ResourceId: string) {AppServiceIdsJsonString} | project ResourceId = toupper(ResourceId);\r\nlet TotalMetrics = AzureMetrics \r\n    | extend appJoinId = toupper(ResourceId)\r\n    | join kind=inner AllApps on $left.appJoinId == $right.ResourceId\r\n    | where MetricName in (\"CpuTime\", \"Requests\")\r\n    | summarize \r\n        CpuTime = sum(iif(MetricName == \"CpuTime\", Total, 0.0)),\r\n        Requests = sum(iif(MetricName == \"Requests\", Total, 0.0))\r\n         by  ResourceId;\r\nlet AverageMetrics = AzureMetrics \r\n    | extend appJoinId = toupper(ResourceId)\r\n    | join kind=inner AllApps on $left.appJoinId == $right.ResourceId\r\n    | where MetricName in (\"PrivateBytes\", \"AppConnections\")\r\n    | summarize \r\n        PrivateBytes = sum(iif(MetricName == \"PrivateBytes\", Average, 0.0)),\r\n        PrivateBytesCount = sum(iif(MetricName == \"PrivateBytes\", 1, 0)),\r\n        AppConnections = sum(iif(MetricName == \"AppConnections\", Total, 0.0)),\r\n        AppConnectionsCount = sum(iif(MetricName == \"AppConnections\", 1, 0))\r\n        by  ResourceId\r\n    | project\r\n        ResourceId,\r\n        PrivateBytes = PrivateBytes / PrivateBytesCount,\r\n        AppConnections = AppConnections / AppConnectionsCount;\r\nAllApps \r\n| join kind=leftouter TotalMetrics on $left.ResourceId == $right.ResourceId\r\n| join kind=leftouter AverageMetrics on $left.ResourceId == $right.ResourceId\r\n| project \r\n    App = ResourceId,  \r\n    TotalCpuTime = coalesce(tolong(column_ifexists(\"CpuTime\", 0)), 0), \r\n    AveragePrivateBytes = coalesce(tolong(column_ifexists(\"PrivateBytes\", 0)), 0), \r\n    TotalRequests = coalesce(tolong(column_ifexists(\"Requests\", 0)), 0)\r\n",
+              "chartId": "workbook51c74cff-ccdc-4b69-b638-5ba0cbbf472d",
+              "version": "MetricsItem/2.0",
               "size": 0,
-              "timeContextFromParameter": "MetricsTimeWindow",
-              "queryType": 0,
+              "chartType": 0,
               "resourceType": "microsoft.web/sites",
-              "crossComponentResources": [
+              "metricScope": 0,
+              "resourceParameter": "AppServiceIds",
+              "resourceIds": [
                 "{AppServiceIds}"
+              ],
+              "timeContext": {
+                "durationMs": 3600000
+              },
+              "metrics": [
+                {
+                  "namespace": "microsoft.web/sites",
+                  "metric": "microsoft.web/sites--AverageMemoryWorkingSet",
+                  "aggregation": 4
+                },
+                {
+                  "namespace": "microsoft.web/sites",
+                  "metric": "microsoft.web/sites--PrivateBytes",
+                  "aggregation": 4
+                }
               ],
               "gridSettings": {
                 "formatters": [
                   {
-                    "columnMatch": "CpuTime",
-                    "formatter": 8,
+                    "columnMatch": "Subscription",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "Name",
+                    "formatter": 13,
                     "formatOptions": {
-                      "palette": "yellowOrangeRed"
+                      "linkTarget": "Resource",
+                      "showIcon": true
                     }
                   },
                   {
-                    "columnMatch": "PrivateBytes",
+                    "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet",
                     "formatter": 8,
                     "formatOptions": {
-                      "palette": "yellowOrangeRed"
+                      "palette": "coldHot"
+                    },
+                    "numberFormat": {
+                      "unit": 2,
+                      "options": {
+                        "style": "decimal"
+                      }
                     }
                   },
                   {
-                    "columnMatch": "Requests",
+                    "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--PrivateBytes",
                     "formatter": 8,
                     "formatOptions": {
-                      "palette": "yellowOrangeRed"
+                      "palette": "coldHot"
+                    },
+                    "numberFormat": {
+                      "unit": 2,
+                      "options": {
+                        "style": "decimal"
+                      }
                     }
                   },
                   {
-                    "columnMatch": "AverageAppConnectionsPerMinute",
-                    "formatter": 8,
-                    "formatOptions": {
-                      "palette": "yellowOrangeRed"
-                    }
-                  },
-                  {
-                    "columnMatch": "TcpEstablished",
-                    "formatter": 8,
-                    "formatOptions": {
-                      "palette": "yellowOrangeRed"
-                    }
-                  },
-                  {
-                    "columnMatch": "percentile_Maximum_80",
-                    "formatter": 8,
-                    "formatOptions": {
-                      "palette": "orangeRed"
-                    }
+                    "columnMatch": "microsoft.web/sites--PrivateBytes Timeline",
+                    "formatter": 5
                   }
                 ],
+                "rowLimit": 10000,
                 "labelSettings": [
                   {
-                    "columnId": "TotalCpuTime",
-                    "label": "Total CPU Time"
+                    "columnId": "microsoft.web/sites--AverageMemoryWorkingSet",
+                    "label": "Average memory working set (Average)"
                   },
                   {
-                    "columnId": "AveragePrivateBytes",
-                    "label": "Average Private Bytes"
+                    "columnId": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
+                    "label": "Average memory working set Timeline"
                   },
                   {
-                    "columnId": "TotalRequests",
-                    "label": "Total Requests"
+                    "columnId": "microsoft.web/sites--PrivateBytes",
+                    "label": "Private Bytes (Average)"
+                  },
+                  {
+                    "columnId": "microsoft.web/sites--PrivateBytes Timeline",
+                    "label": "Private Bytes Timeline"
                   }
                 ]
-              },
-              "sortBy": []
+              }
             },
-            "customWidth": "70",
-            "name": "query - 5"
+            "customWidth": "50",
+            "name": "metric - 5"
           },
           {
             "type": 12,
