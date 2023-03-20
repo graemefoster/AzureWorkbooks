@@ -58,36 +58,6 @@
       "name": "links - 11"
     },
     {
-      "type": 9,
-      "content": {
-        "version": "KqlParameterItem/1.0",
-        "parameters": [
-          {
-            "id": "0a37e0af-d3f6-490f-bdf3-58929aa8ba32",
-            "version": "KqlParameterItem/1.0",
-            "name": "app_ids",
-            "type": 5,
-            "isHiddenWhenLocked": true,
-            "typeSettings": {
-              "resourceTypeFilter": {
-                "microsoft.web/sites": true,
-                "microsoft.web/sites/slots": true
-              },
-              "additionalResourceOptions": []
-            },
-            "timeContext": {
-              "durationMs": 86400000
-            },
-            "value": null
-          }
-        ],
-        "style": "pills",
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces"
-      },
-      "name": "parameters - 7"
-    },
-    {
       "type": 12,
       "content": {
         "version": "NotebookGroup/1.0",
@@ -112,6 +82,11 @@
                   "fieldName": "app_ids",
                   "parameterName": "app_ids",
                   "parameterType": 5
+                },
+                {
+                  "fieldName": "aseId",
+                  "parameterName": "SelectedAseId",
+                  "parameterType": 1
                 }
               ],
               "queryType": 1,
@@ -184,6 +159,20 @@
             "name": "query - 3"
           },
           {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "resources\r\n| where type == \"microsoft.web/serverfarms\"\r\n| where toupper(properties.hostingEnvironmentId) == '{SelectedAseId}'\r\n| project aspJoinId=toupper(id), Sku = sku.name, Capacity = sku.capacity\r\n| join kind=leftouter (\r\n    resources         \r\n    | where type == \"microsoft.web/sites\" or type == \"microsoft.web/sites/slots\"\r\n    | project aspJoinId = toupper(properties.serverFarmId), AppId = id\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| project AspId = aspJoinId, AppId, Sku, Capacity\r\n",
+              "size": 0,
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ]
+            },
+            "name": "query - 5"
+          },
+          {
             "type": 10,
             "content": {
               "chartId": "workbook0dfcecd6-6d95-430a-8a62-5ee8d8e6f54a",
@@ -220,7 +209,11 @@
                 "formatters": [
                   {
                     "columnMatch": "Subscription",
-                    "formatter": 5
+                    "formatter": 15,
+                    "formatOptions": {
+                      "linkTarget": null,
+                      "showIcon": true
+                    }
                   },
                   {
                     "columnMatch": "Name",
@@ -328,6 +321,11 @@
       "content": {
         "json": "# App Service Plans\r\n\r\nThis pane shows you details about the App Service Plans within an ASE.\r\nAn App Service Plan can have a maximum of 100 instances running apps within it. This view shows you\r\n - Number of instance, and Apps in each App Service Plan\r\n - The max number of instances that can still be attached to an App Service plan\r\n - The number of apps running on an App Service Plan\r\n - The number of apps over recommendation running on an App Service Plan\r\n",
         "style": "info"
+      },
+      "conditionalVisibility": {
+        "parameterName": "SelectedTab",
+        "comparison": "isEqualTo",
+        "value": "2"
       },
       "name": "text - 0"
     },
@@ -583,6 +581,11 @@
                   "namespace": "microsoft.web/sites",
                   "metric": "microsoft.web/sites--PrivateBytes",
                   "aggregation": 4
+                },
+                {
+                  "namespace": "microsoft.web/sites",
+                  "metric": "microsoft.web/sites--CpuTime",
+                  "aggregation": 1
                 }
               ],
               "gridSettings": {
@@ -632,6 +635,23 @@
                   {
                     "columnMatch": "microsoft.web/sites--PrivateBytes Timeline",
                     "formatter": 5
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--CpuTime",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "coldHot"
+                    },
+                    "numberFormat": {
+                      "unit": 24,
+                      "options": {
+                        "style": "decimal"
+                      }
+                    }
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--CpuTime Timeline",
+                    "formatter": 5
                   }
                 ],
                 "rowLimit": 10000,
@@ -651,6 +671,14 @@
                   {
                     "columnId": "microsoft.web/sites--PrivateBytes Timeline",
                     "label": "Private Bytes Timeline"
+                  },
+                  {
+                    "columnId": "microsoft.web/sites--CpuTime",
+                    "label": "CPU Time (Sum)"
+                  },
+                  {
+                    "columnId": "microsoft.web/sites--CpuTime Timeline",
+                    "label": "CPU Time Timeline"
                   }
                 ]
               }
