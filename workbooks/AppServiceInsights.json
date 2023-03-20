@@ -66,7 +66,7 @@
           {
             "type": 1,
             "content": {
-              "json": "# App Service Environments \r\n\r\nAn ASE can have a maximum of 200 instances across all of its App Service Plans. \r\nThis view shows you the total number of instances currently assigned to all the App Service Plans within an App Service Environment.\r\n\r\n",
+              "json": "# App Service Environments \r\n\r\nAn ASE can have a maximum of 200 instances across all of its App Service Plans. \r\nThis view shows you the total number of instances currently assigned to all the App Service Plans within an App Service Environment.\r\n",
               "style": "info"
             },
             "name": "text - 2"
@@ -75,8 +75,9 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinid = toupper(id), vnetJoinId = toupper(properties.virtualNetwork.id)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | where properties.hostingEnvironmentId != \"\"\r\n    | extend  aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId=toupper(id)\r\n    | join kind=leftouter (\r\n        resources         \r\n        | where type == \"microsoft.web/sites\" or type == \"microsoft.web/sites/slots\"\r\n        | extend aspJoinId = toupper(properties.serverFarmId)\r\n        | summarize app_ids = makeset(id) by aspJoinId\r\n    ) on $left.aspJoinId == $right.aspJoinId\r\n    | summarize aspCount = count(), app_ids = makeset(app_ids), totalInstances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinid == $right.aseJoinId\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.network/virtualnetworks\"\r\n    | mv-expand subnet = properties.subnets\r\n    | project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n    | project \r\n        vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n        cidrRange,\r\n        availableIpAddresses = pow(2, (32 - cidrRange)) - 5 //https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n) on $left.vnetJoinId == $right.vnetJoinId\r\n| project \r\n    aseId = aseJoinId, \r\n    totalInstances = totalInstances, \r\n    remaining_instances = 200 - totalInstances, \r\n    totalSubnetIpAddresses = availableIpAddresses,\r\n    cidrRange,\r\n    app_ids\r\n| order by totalInstances desc\r\n",
+              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinid = toupper(id), vnetJoinId = toupper(properties.virtualNetwork.id)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | where properties.hostingEnvironmentId != \"\"\r\n    | extend  aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId=toupper(id)\r\n    | join kind=leftouter (\r\n        resources         \r\n        | where type == \"microsoft.web/sites\"\r\n        | extend aspJoinId = toupper(properties.serverFarmId)\r\n        | summarize app_ids = make_set(id), app_count=count() by aspJoinId\r\n    ) on $left.aspJoinId == $right.aspJoinId\r\n    | summarize aspCount = count(), app_ids = make_set(app_ids), app_count = sum(app_count), totalInstances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinid == $right.aseJoinId\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.network/virtualnetworks\"\r\n    | mv-expand subnet = properties.subnets\r\n    | project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n    | project \r\n        vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n        cidrRange,\r\n        availableIpAddresses = pow(2, (32 - cidrRange)) - 5 //https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n) on $left.vnetJoinId == $right.vnetJoinId\r\n| project \r\n    aseId = aseJoinId, \r\n    totalInstances = totalInstances, \r\n    remaining_instances = 200 - totalInstances, \r\n    totalSubnetIpAddresses = availableIpAddresses,\r\n    cidrRange,\r\n    app_ids,\r\n    app_count\r\n| order by totalInstances desc\r\n",
               "size": 1,
+              "showRefreshButton": true,
               "exportedParameters": [
                 {
                   "fieldName": "app_ids",
@@ -87,8 +88,14 @@
                   "fieldName": "aseId",
                   "parameterName": "SelectedAseId",
                   "parameterType": 1
+                },
+                {
+                  "fieldName": "app_count",
+                  "parameterName": "SelectedAseAppCountt",
+                  "parameterType": 1
                 }
               ],
+              "showExportToExcel": true,
               "queryType": 1,
               "resourceType": "microsoft.resourcegraph/resources",
               "crossComponentResources": [
@@ -146,6 +153,10 @@
                   {
                     "columnId": "totalSubnetIpAddresses",
                     "label": "Subnet Size"
+                  },
+                  {
+                    "columnId": "app_count",
+                    "label": "Apps  (excluding slots)"
                   }
                 ]
               },
@@ -162,13 +173,28 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.web/serverfarms\"\r\n| where toupper(properties.hostingEnvironmentId) == '{SelectedAseId}'\r\n| project aspJoinId=toupper(id), Sku = sku.name, Capacity = sku.capacity\r\n| join kind=leftouter (\r\n    resources         \r\n    | where type == \"microsoft.web/sites\" or type == \"microsoft.web/sites/slots\"\r\n    | project aspJoinId = toupper(properties.serverFarmId), AppId = id\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| project AspId = aspJoinId, AppId, Sku, Capacity\r\n",
+              "query": "resources\r\n| where type == \"microsoft.web/serverfarms\"\r\n| where toupper(properties.hostingEnvironmentId) == '{SelectedAseId}'\r\n| project AseId=properties.hostingEnvironmentId, AspId=id, aspJoinId=toupper(id), Sku = sku.name, Capacity = sku.capacity\r\n| join kind=leftouter (\r\n    resources         \r\n    | where type == \"microsoft.web/sites\"\r\n    | project aspJoinId = toupper(properties.serverFarmId), AppId = id\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| project AseId, AspId, AppId",
               "size": 0,
+              "showRefreshButton": true,
+              "showExportToExcel": true,
               "queryType": 1,
               "resourceType": "microsoft.resourcegraph/resources",
               "crossComponentResources": [
                 "{Subscriptions}"
-              ]
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "AseId",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": null,
+                      "showIcon": true
+                    }
+                  }
+                ],
+                "rowLimit": 1000
+              }
             },
             "name": "query - 5"
           },
@@ -186,7 +212,7 @@
                 "{app_ids}"
               ],
               "timeContext": {
-                "durationMs": 604800000
+                "durationMs": 2592000000
               },
               "metrics": [
                 {
@@ -205,6 +231,8 @@
                   "aggregation": 1
                 }
               ],
+              "resourceLimit": 1000,
+              "showRefreshButton": true,
               "gridSettings": {
                 "formatters": [
                   {
@@ -276,6 +304,12 @@
                   }
                 ],
                 "rowLimit": 10000,
+                "sortBy": [
+                  {
+                    "itemKey": "$gen_link_Name_1",
+                    "sortOrder": 1
+                  }
+                ],
                 "labelSettings": [
                   {
                     "columnId": "microsoft.web/sites--AverageMemoryWorkingSet",
@@ -303,7 +337,13 @@
                   }
                 ]
               },
-              "sortBy": []
+              "sortBy": [
+                {
+                  "itemKey": "$gen_link_Name_1",
+                  "sortOrder": 1
+                }
+              ],
+              "showExportToExcel": true
             },
             "name": "metric - 3"
           }
@@ -339,8 +379,9 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinId = toupper(id)\r\n| join kind=leftouter (\r\n    resources \r\n    | where type == \"microsoft.web/serverfarms\" \r\n    | extend aseJoinId = toupper(properties.hostingEnvironmentId)\r\n    | summarize ase_used_instances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=fullouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, size = sku.size, instances = toint(sku.capacity), aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n    | project aseJoinId, aspJoinId, instances, tier, size\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=leftouter (\r\n            resources         \r\n            | where type == \"microsoft.web/sites\" or type == \"microsoft.web/sites/slots\"\r\n            | extend aspJoinId = toupper(properties.serverFarmId), isRunning = iif(properties.state == \"Running\", 1, 0)\r\n            | summarize appCount=count(), runningCount=sum(isRunning), app_ids = makeset(id) by aspJoinId\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| extend \r\n    maxAppRecommendation =\r\n        case(\r\n            size == 'F1', 9999,\r\n\r\n            size == 'B1', 8,\r\n            size == 'S1', 8,\r\n            size == 'P1v2', 8,\r\n            size == 'I1', 8,\r\n\r\n            size == 'B2', 16,\r\n            size == 'S2', 16,\r\n            size == 'P1v3', 16,\r\n            size == 'P2v2', 16,\r\n            size == 'I2', 16,\r\n            size == 'I1v2', 16,\r\n\r\n            size == 'B3', 32,\r\n            size == 'S3', 32,\r\n            size == 'P3v2', 32,\r\n            size == 'P2v3', 32,\r\n            size == 'I3', 32,\r\n            size == 'I2v2', 32,\r\n\r\n            size == 'P3v3', 64,\r\n            size == 'I3v2', 64,\r\n\r\n            size == 'I4v2', 128,\r\n            size == 'I5v2', 256,\r\n            size == 'I6v2', 512,\r\n            0\r\n        )\r\n| extend \r\n    allowedHybridConnections = case(\r\n            substring(size, 0, 1)  == 'B', 5,\r\n            substring(size, 0, 1)  == 'S', 25,\r\n            substring(size, 0, 1)  == 'P', 220,\r\n            substring(size, 0, 1)  == 'I', 220,\r\n            0\r\n   )\r\n| extend \r\n    remainingAppSlots = maxAppRecommendation - appCount,\r\n    used_recommended_apps = min_of(maxAppRecommendation, appCount)\r\n| extend\r\n    remaining_recommended_apps = max_of(0, remainingAppSlots),\r\n    over_recommended_apps =  -min_of(remainingAppSlots, 0)\r\n| project \r\n    aseId = aseJoinId, \r\n    aspId = aspJoinId, \r\n    tier, \r\n    size, \r\n    instances,\r\n    appCount, \r\n    runningCount,\r\n    remaining_possible_instances = min_of(100 - instances, (200 - ase_used_instances)),\r\n    used_recommended_apps,\r\n    remaining_recommended_apps,\r\n    over_recommended_apps,\r\n    app_ids = app_ids,\r\n    app_ids_json_string = tostring(app_ids),\r\n    apps_label = \r\n        strcat(\r\n            case(remaining_recommended_apps > 0, strcat(tostring(used_recommended_apps), \" (\", tostring(remaining_recommended_apps), \" remaining)\"), \"\"),\r\n            case(over_recommended_apps > 0, strcat(tostring(appCount), \" (\", tostring(over_recommended_apps), \" over)\"), \"\") \r\n        ),\r\n    allowedHybridConnections\r\n  \r\n| order by appCount, instances desc\r\n",
+              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinId = toupper(id)\r\n| join kind=leftouter (\r\n    resources \r\n    | where type == \"microsoft.web/serverfarms\" \r\n    | extend aseJoinId = toupper(properties.hostingEnvironmentId)\r\n    | summarize ase_used_instances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=fullouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, size = sku.size, instances = toint(sku.capacity), aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n    | project aseJoinId, aspJoinId, instances, tier, size\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=leftouter (\r\n            resources         \r\n            | where type == \"microsoft.web/sites\" or type == \"microsoft.web/sites/slots\"\r\n            | extend aspJoinId = toupper(properties.serverFarmId), isRunning = iif(properties.state == \"Running\", 1, 0)\r\n            | summarize appCount=count(), runningCount=sum(isRunning), app_ids = make_set(id) by aspJoinId\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| extend \r\n    maxAppRecommendation =\r\n        case(\r\n            size == 'F1', 9999,\r\n\r\n            size == 'B1', 8,\r\n            size == 'S1', 8,\r\n            size == 'P1v2', 8,\r\n            size == 'I1', 8,\r\n\r\n            size == 'B2', 16,\r\n            size == 'S2', 16,\r\n            size == 'P1v3', 16,\r\n            size == 'P2v2', 16,\r\n            size == 'I2', 16,\r\n            size == 'I1v2', 16,\r\n\r\n            size == 'B3', 32,\r\n            size == 'S3', 32,\r\n            size == 'P3v2', 32,\r\n            size == 'P2v3', 32,\r\n            size == 'I3', 32,\r\n            size == 'I2v2', 32,\r\n\r\n            size == 'P3v3', 64,\r\n            size == 'I3v2', 64,\r\n\r\n            size == 'I4v2', 128,\r\n            size == 'I5v2', 256,\r\n            size == 'I6v2', 512,\r\n            0\r\n        )\r\n| extend \r\n    allowedHybridConnections = case(\r\n            substring(size, 0, 1)  == 'B', 5,\r\n            substring(size, 0, 1)  == 'S', 25,\r\n            substring(size, 0, 1)  == 'P', 220,\r\n            substring(size, 0, 1)  == 'I', 220,\r\n            0\r\n   )\r\n| extend \r\n    remainingAppSlots = maxAppRecommendation - appCount,\r\n    used_recommended_apps = min_of(maxAppRecommendation, appCount)\r\n| extend\r\n    remaining_recommended_apps = max_of(0, remainingAppSlots),\r\n    over_recommended_apps =  -min_of(remainingAppSlots, 0)\r\n| project \r\n    aseId = aseJoinId, \r\n    aspId = aspJoinId, \r\n    tier, \r\n    size, \r\n    instances,\r\n    appCount, \r\n    runningCount,\r\n    remaining_possible_instances = min_of(100 - instances, (200 - ase_used_instances)),\r\n    used_recommended_apps,\r\n    remaining_recommended_apps,\r\n    over_recommended_apps,\r\n    app_ids = app_ids,\r\n    app_ids_json_string = tostring(app_ids),\r\n    apps_label = \r\n        strcat(\r\n            case(remaining_recommended_apps > 0, strcat(tostring(used_recommended_apps), \" (\", tostring(remaining_recommended_apps), \" remaining)\"), \"\"),\r\n            case(over_recommended_apps > 0, strcat(tostring(appCount), \" (\", tostring(over_recommended_apps), \" over)\"), \"\") \r\n        ),\r\n    allowedHybridConnections\r\n  \r\n| order by appCount, instances desc\r\n",
               "size": 1,
+              "showRefreshButton": true,
               "exportedParameters": [
                 {
                   "fieldName": "aspId",
@@ -364,6 +405,7 @@
                   "parameterType": 1
                 }
               ],
+              "showExportToExcel": true,
               "queryType": 1,
               "resourceType": "microsoft.resourcegraph/resources",
               "crossComponentResources": [
@@ -449,6 +491,12 @@
                     "formatter": 5
                   }
                 ],
+                "sortBy": [
+                  {
+                    "itemKey": "$gen_link_aseId_0",
+                    "sortOrder": 1
+                  }
+                ],
                 "labelSettings": [
                   {
                     "columnId": "aseId",
@@ -488,7 +536,12 @@
                   }
                 ]
               },
-              "sortBy": []
+              "sortBy": [
+                {
+                  "itemKey": "$gen_link_aseId_0",
+                  "sortOrder": 1
+                }
+              ]
             },
             "name": "AppServicePlanOverview"
           },
@@ -586,8 +639,15 @@
                   "namespace": "microsoft.web/sites",
                   "metric": "microsoft.web/sites--CpuTime",
                   "aggregation": 1
+                },
+                {
+                  "namespace": "microsoft.web/sites",
+                  "metric": "microsoft.web/sites--AppConnections",
+                  "aggregation": 4
                 }
               ],
+              "resourceLimit": 1000,
+              "showRefreshButton": true,
               "gridSettings": {
                 "formatters": [
                   {
@@ -652,9 +712,32 @@
                   {
                     "columnMatch": "microsoft.web/sites--CpuTime Timeline",
                     "formatter": 5
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--AppConnections",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "coldHot"
+                    },
+                    "numberFormat": {
+                      "unit": 0,
+                      "options": {
+                        "style": "decimal"
+                      }
+                    }
+                  },
+                  {
+                    "columnMatch": "microsoft.web/sites--AppConnections Timeline",
+                    "formatter": 5
                   }
                 ],
                 "rowLimit": 10000,
+                "sortBy": [
+                  {
+                    "itemKey": "$gen_heatmap_microsoft.web/sites--PrivateBytes_4",
+                    "sortOrder": 2
+                  }
+                ],
                 "labelSettings": [
                   {
                     "columnId": "microsoft.web/sites--AverageMemoryWorkingSet",
@@ -679,11 +762,26 @@
                   {
                     "columnId": "microsoft.web/sites--CpuTime Timeline",
                     "label": "CPU Time Timeline"
+                  },
+                  {
+                    "columnId": "microsoft.web/sites--AppConnections",
+                    "label": "Connections (Average)"
+                  },
+                  {
+                    "columnId": "microsoft.web/sites--AppConnections Timeline",
+                    "label": "Connections Timeline"
                   }
                 ]
-              }
+              },
+              "sortBy": [
+                {
+                  "itemKey": "$gen_heatmap_microsoft.web/sites--PrivateBytes_4",
+                  "sortOrder": 2
+                }
+              ],
+              "showExportToExcel": true
             },
-            "customWidth": "50",
+            "customWidth": "70",
             "name": "metric - 5"
           },
           {
