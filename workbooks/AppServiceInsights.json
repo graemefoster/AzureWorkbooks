@@ -1,1148 +1,1386 @@
 {
-  "version": "Notebook/1.0",
-  "items": [
-    {
-      "type": 9,
-      "content": {
-        "version": "KqlParameterItem/1.0",
-        "parameters": [
-          {
-            "id": "0ced0017-b958-419a-9b1a-d1e90e677826",
-            "version": "KqlParameterItem/1.0",
-            "name": "Subscriptions",
-            "type": 6,
-            "multiSelect": true,
-            "quote": "'",
-            "delimiter": ",",
-            "typeSettings": {
-              "additionalResourceOptions": [],
-              "includeAll": false
+    "version": "Notebook/1.0",
+    "items": [
+        {
+            "type": 9,
+            "content": {
+                "version": "KqlParameterItem/1.0",
+                "parameters": [
+                    {
+                        "id": "0ced0017-b958-419a-9b1a-d1e90e677826",
+                        "version": "KqlParameterItem/1.0",
+                        "name": "Subscriptions",
+                        "type": 6,
+                        "multiSelect": true,
+                        "quote": "'",
+                        "delimiter": ",",
+                        "typeSettings": {
+                            "additionalResourceOptions": [],
+                            "includeAll": false
+                        },
+                        "timeContext": {
+                            "durationMs": 86400000
+                        },
+                        "value": []
+                    },
+                    {
+                        "id": "a605dc1a-c942-4aa4-8ea8-95671beb714f",
+                        "version": "KqlParameterItem/1.0",
+                        "name": "MetricsTimeRange",
+                        "type": 4,
+                        "isRequired": true,
+                        "typeSettings": {
+                            "selectableValues": [
+                                {
+                                    "durationMs": 300000
+                                },
+                                {
+                                    "durationMs": 900000
+                                },
+                                {
+                                    "durationMs": 1800000
+                                },
+                                {
+                                    "durationMs": 3600000
+                                },
+                                {
+                                    "durationMs": 14400000
+                                },
+                                {
+                                    "durationMs": 43200000
+                                },
+                                {
+                                    "durationMs": 86400000
+                                },
+                                {
+                                    "durationMs": 172800000
+                                },
+                                {
+                                    "durationMs": 259200000
+                                },
+                                {
+                                    "durationMs": 604800000
+                                },
+                                {
+                                    "durationMs": 1209600000
+                                },
+                                {
+                                    "durationMs": 2419200000
+                                },
+                                {
+                                    "durationMs": 2592000000
+                                },
+                                {
+                                    "durationMs": 5184000000
+                                },
+                                {
+                                    "durationMs": 7776000000
+                                }
+                            ],
+                            "allowCustom": true
+                        },
+                        "value": {
+                            "durationMs": 604800000
+                        }
+                    }
+                ],
+                "style": "pills",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
             },
-            "timeContext": {
-              "durationMs": 86400000
+            "name": "parameters - 3"
+        },
+        {
+            "type": 11,
+            "content": {
+                "version": "LinkItem/1.0",
+                "style": "tabs",
+                "links": [
+                    {
+                        "id": "6519caf8-0cb9-4f19-8ec8-1167e55086a3",
+                        "cellValue": "SelectedTab",
+                        "linkTarget": "parameter",
+                        "linkLabel": "App Service Plans",
+                        "subTarget": "2",
+                        "style": "link"
+                    },
+                    {
+                        "id": "577fe92b-d1de-41f6-8c9b-5919104e4b97",
+                        "cellValue": "SelectedTab",
+                        "linkTarget": "parameter",
+                        "linkLabel": "App Service Environments",
+                        "subTarget": "3",
+                        "style": "link"
+                    }
+                ]
             },
-            "value": [
-            ]
-          }
-        ],
-        "style": "pills",
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces"
-      },
-      "name": "parameters - 3"
-    },
-    {
-      "type": 11,
-      "content": {
-        "version": "LinkItem/1.0",
-        "style": "tabs",
-        "links": [
-          {
-            "id": "6519caf8-0cb9-4f19-8ec8-1167e55086a3",
-            "cellValue": "SelectedTab",
-            "linkTarget": "parameter",
-            "linkLabel": "App Service Plans",
-            "subTarget": "2",
-            "style": "link"
-          },
-          {
-            "id": "577fe92b-d1de-41f6-8c9b-5919104e4b97",
-            "cellValue": "SelectedTab",
-            "linkTarget": "parameter",
-            "linkLabel": "App Service Environments",
-            "subTarget": "3",
-            "style": "link"
-          }
-        ]
-      },
-      "name": "links - 11"
-    },
-    {
-      "type": 12,
-      "content": {
-        "version": "NotebookGroup/1.0",
-        "groupType": "editable",
-        "items": [
-          {
+            "name": "links - 11"
+        },
+        {
+            "type": 12,
+            "content": {
+                "version": "NotebookGroup/1.0",
+                "groupType": "editable",
+                "items": [
+                    {
+                        "type": 1,
+                        "content": {
+                            "json": "# App Service Environments \r\n\r\nAn ASE can have a maximum of 200 instances across all of its App Service Plans. \r\nThis view shows you the total number of instances currently assigned to all the App Service Plans within an App Service Environment.\r\n",
+                            "style": "info"
+                        },
+                        "name": "text - 2"
+                    },
+                    {
+                        "type": 3,
+                        "content": {
+                            "version": "KqlItem/1.0",
+                            "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinid = toupper(id), vnetJoinId = toupper(properties.virtualNetwork.id)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | where properties.hostingEnvironmentId != \"\"\r\n    | extend  aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId=toupper(id)\r\n    | join kind=leftouter (\r\n        resources         \r\n        | where type == \"microsoft.web/sites\"\r\n        | extend aspJoinId = toupper(properties.serverFarmId)\r\n        | summarize app_ids = make_set(id), app_count=count() by aspJoinId\r\n    ) on $left.aspJoinId == $right.aspJoinId\r\n    | summarize aspCount = count(), app_ids = make_set(app_ids), app_count = sum(app_count), totalInstances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinid == $right.aseJoinId\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.network/virtualnetworks\"\r\n    | mv-expand subnet = properties.subnets\r\n    | project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n    | project \r\n        vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n        cidrRange,\r\n        availableIpAddresses = pow(2, (32 - cidrRange)) - 5 //https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n) on $left.vnetJoinId == $right.vnetJoinId\r\n| project \r\n    aseId = aseJoinId, \r\n    totalInstances = totalInstances, \r\n    remaining_instances = 200 - totalInstances, \r\n    totalSubnetIpAddresses = availableIpAddresses,\r\n    cidrRange,\r\n    app_ids,\r\n    app_count\r\n| order by totalInstances desc\r\n",
+                            "size": 1,
+                            "showRefreshButton": true,
+                            "exportedParameters": [
+                                {
+                                    "fieldName": "app_ids",
+                                    "parameterName": "app_ids",
+                                    "parameterType": 5
+                                },
+                                {
+                                    "fieldName": "aseId",
+                                    "parameterName": "SelectedAseId",
+                                    "parameterType": 1
+                                },
+                                {
+                                    "fieldName": "app_count",
+                                    "parameterName": "SelectedAseAppCountt",
+                                    "parameterType": 1
+                                }
+                            ],
+                            "showExportToExcel": true,
+                            "queryType": 1,
+                            "resourceType": "microsoft.resourcegraph/resources",
+                            "crossComponentResources": [
+                                "{Subscriptions}"
+                            ],
+                            "gridSettings": {
+                                "formatters": [
+                                    {
+                                        "columnMatch": "remaining_instances",
+                                        "formatter": 22,
+                                        "formatOptions": {
+                                            "compositeBarSettings": {
+                                                "labelText": "[\"totalInstances\"] / 200",
+                                                "columnSettings": [
+                                                    {
+                                                        "columnName": "totalInstances",
+                                                        "color": "orange"
+                                                    },
+                                                    {
+                                                        "columnName": "remaining_instances",
+                                                        "color": "blue"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "cidrRange",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "app_ids",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "aspCount",
+                                        "formatter": 5
+                                    }
+                                ],
+                                "sortBy": [
+                                    {
+                                        "itemKey": "$gen_link_aseId_0",
+                                        "sortOrder": 1
+                                    }
+                                ],
+                                "labelSettings": [
+                                    {
+                                        "columnId": "aseId",
+                                        "label": "ASE"
+                                    },
+                                    {
+                                        "columnId": "remaining_instances",
+                                        "label": "Instances Status "
+                                    },
+                                    {
+                                        "columnId": "totalSubnetIpAddresses",
+                                        "label": "Subnet Size"
+                                    },
+                                    {
+                                        "columnId": "app_count",
+                                        "label": "Apps  (excluding slots)"
+                                    }
+                                ]
+                            },
+                            "sortBy": [
+                                {
+                                    "itemKey": "$gen_link_aseId_0",
+                                    "sortOrder": 1
+                                }
+                            ]
+                        },
+                        "name": "query - 3"
+                    },
+                    {
+                        "type": 3,
+                        "content": {
+                            "version": "KqlItem/1.0",
+                            "query": "resources\r\n| where type == \"microsoft.web/serverfarms\"\r\n| where toupper(properties.hostingEnvironmentId) == '{SelectedAseId}'\r\n| project AseId=properties.hostingEnvironmentId, AspId=id, aspJoinId=toupper(id), Sku = sku.name, Capacity = sku.capacity\r\n| join kind=leftouter (\r\n    resources         \r\n    | where type == \"microsoft.web/sites\"\r\n    | project aspJoinId = toupper(properties.serverFarmId), AppId = id\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| project AseId, AspId, AppId",
+                            "size": 0,
+                            "showRefreshButton": true,
+                            "showExportToExcel": true,
+                            "queryType": 1,
+                            "resourceType": "microsoft.resourcegraph/resources",
+                            "crossComponentResources": [
+                                "{Subscriptions}"
+                            ],
+                            "gridSettings": {
+                                "formatters": [
+                                    {
+                                        "columnMatch": "AseId",
+                                        "formatter": 13,
+                                        "formatOptions": {
+                                            "linkTarget": null,
+                                            "showIcon": true
+                                        }
+                                    }
+                                ],
+                                "rowLimit": 1000
+                            }
+                        },
+                        "name": "query - 5"
+                    },
+                    {
+                        "type": 10,
+                        "content": {
+                            "chartId": "workbook0dfcecd6-6d95-430a-8a62-5ee8d8e6f54a",
+                            "version": "MetricsItem/2.0",
+                            "size": 0,
+                            "chartType": 0,
+                            "resourceType": "microsoft.web/sites",
+                            "metricScope": 0,
+                            "resourceParameter": "app_ids",
+                            "resourceIds": [
+                                "{app_ids}"
+                            ],
+                            "timeContextFromParameter": "MetricsTimeRange",
+                            "timeContext": {
+                                "durationMs": 0
+                            },
+                            "metrics": [
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--AverageMemoryWorkingSet",
+                                    "aggregation": 4
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--PrivateBytes",
+                                    "aggregation": 4
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--CpuTime",
+                                    "aggregation": 1
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--IoReadBytesPerSecond",
+                                    "aggregation": 1
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--IoWriteBytesPerSecond",
+                                    "aggregation": 1
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--Requests",
+                                    "aggregation": 4
+                                }
+                            ],
+                            "resourceLimit": 1000,
+                            "showRefreshButton": true,
+                            "gridSettings": {
+                                "formatters": [
+                                    {
+                                        "columnMatch": "Subscription",
+                                        "formatter": 15,
+                                        "formatOptions": {
+                                            "linkTarget": null,
+                                            "showIcon": true
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "Name",
+                                        "formatter": 13,
+                                        "formatOptions": {
+                                            "linkTarget": "Resource",
+                                            "showIcon": true
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 2,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--PrivateBytes",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 2,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--PrivateBytes Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--CpuTime",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 24,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--CpuTime Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--IoReadBytesPerSecond",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 11,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--IoReadBytesPerSecond Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--IoWriteBytesPerSecond",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 11,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--IoWriteBytesPerSecond Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--Requests",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 0,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--Requests Timeline",
+                                        "formatter": 5
+                                    }
+                                ],
+                                "rowLimit": 10000,
+                                "labelSettings": [
+                                    {
+                                        "columnId": "microsoft.web/sites--AverageMemoryWorkingSet",
+                                        "label": "Average memory working set (Average)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
+                                        "label": "Average memory working set Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--PrivateBytes",
+                                        "label": "Private Bytes (Average)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--PrivateBytes Timeline",
+                                        "label": "Private Bytes Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--CpuTime",
+                                        "label": "CPU Time (Sum)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--CpuTime Timeline",
+                                        "label": "CPU Time Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--IoReadBytesPerSecond",
+                                        "label": "IO Read Bytes Per Second (Average)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--IoReadBytesPerSecond Timeline",
+                                        "label": "IO Read Bytes Per Second Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--IoWriteBytesPerSecond",
+                                        "label": "IO Write Bytes Per Second (Average)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--IoWriteBytesPerSecond Timeline",
+                                        "label": "IO Write Bytes Per Second Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--Requests",
+                                        "label": "Requests (Average)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--Requests Timeline",
+                                        "label": "Requests Timeline"
+                                    }
+                                ]
+                            },
+                            "sortBy": [],
+                            "showExportToExcel": true
+                        },
+                        "name": "metric - 3"
+                    }
+                ]
+            },
+            "conditionalVisibility": {
+                "parameterName": "SelectedTab",
+                "comparison": "isEqualTo",
+                "value": "3"
+            },
+            "name": "AppServiceEnvironment"
+        },
+        {
             "type": 1,
             "content": {
-              "json": "# App Service Environments \r\n\r\nAn ASE can have a maximum of 200 instances across all of its App Service Plans. \r\nThis view shows you the total number of instances currently assigned to all the App Service Plans within an App Service Environment.\r\n",
-              "style": "info"
+                "json": "# App Service Plans\r\n\r\nThis pane shows you details about the App Service Plans within an ASE.\r\nAn App Service Plan can have a maximum of 100 instances running apps within it. This view shows you\r\n - Number of instance, and Apps in each App Service Plan\r\n - The max number of instances that can still be attached to an App Service plan\r\n - The number of apps running on an App Service Plan\r\n - The number of apps over recommendation running on an App Service Plan\r\n",
+                "style": "info"
             },
-            "name": "text - 2"
-          },
-          {
-            "type": 3,
-            "content": {
-              "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinid = toupper(id), vnetJoinId = toupper(properties.virtualNetwork.id)\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | where properties.hostingEnvironmentId != \"\"\r\n    | extend  aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId=toupper(id)\r\n    | join kind=leftouter (\r\n        resources         \r\n        | where type == \"microsoft.web/sites\"\r\n        | extend aspJoinId = toupper(properties.serverFarmId)\r\n        | summarize app_ids = make_set(id), app_count=count() by aspJoinId\r\n    ) on $left.aspJoinId == $right.aspJoinId\r\n    | summarize aspCount = count(), app_ids = make_set(app_ids), app_count = sum(app_count), totalInstances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinid == $right.aseJoinId\r\n| join kind=leftouter (\r\n    resources\r\n    | where type == \"microsoft.network/virtualnetworks\"\r\n    | mv-expand subnet = properties.subnets\r\n    | project id, cidrRange = split(subnet.properties.addressPrefix, '/')[1], subnet \r\n    | project \r\n        vnetJoinId = toupper(strcat(id, '/subnets/', subnet.name)), \r\n        cidrRange,\r\n        availableIpAddresses = pow(2, (32 - cidrRange)) - 5 //https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq\r\n) on $left.vnetJoinId == $right.vnetJoinId\r\n| project \r\n    aseId = aseJoinId, \r\n    totalInstances = totalInstances, \r\n    remaining_instances = 200 - totalInstances, \r\n    totalSubnetIpAddresses = availableIpAddresses,\r\n    cidrRange,\r\n    app_ids,\r\n    app_count\r\n| order by totalInstances desc\r\n",
-              "size": 1,
-              "showRefreshButton": true,
-              "exportedParameters": [
-                {
-                  "fieldName": "app_ids",
-                  "parameterName": "app_ids",
-                  "parameterType": 5
-                },
-                {
-                  "fieldName": "aseId",
-                  "parameterName": "SelectedAseId",
-                  "parameterType": 1
-                },
-                {
-                  "fieldName": "app_count",
-                  "parameterName": "SelectedAseAppCountt",
-                  "parameterType": 1
-                }
-              ],
-              "showExportToExcel": true,
-              "queryType": 1,
-              "resourceType": "microsoft.resourcegraph/resources",
-              "crossComponentResources": [
-                "{Subscriptions}"
-              ],
-              "gridSettings": {
-                "formatters": [
-                  {
-                    "columnMatch": "remaining_instances",
-                    "formatter": 22,
-                    "formatOptions": {
-                      "compositeBarSettings": {
-                        "labelText": "[\"totalInstances\"] / 200",
-                        "columnSettings": [
-                          {
-                            "columnName": "totalInstances",
-                            "color": "orange"
-                          },
-                          {
-                            "columnName": "remaining_instances",
-                            "color": "blue"
-                          }
-                        ]
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "cidrRange",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "app_ids",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "aspCount",
-                    "formatter": 5
-                  }
-                ],
-                "sortBy": [
-                  {
-                    "itemKey": "$gen_compositeBar_remaining_instances_2",
-                    "sortOrder": 1
-                  }
-                ],
-                "labelSettings": [
-                  {
-                    "columnId": "aseId",
-                    "label": "ASE"
-                  },
-                  {
-                    "columnId": "remaining_instances",
-                    "label": "Instances Status "
-                  },
-                  {
-                    "columnId": "totalSubnetIpAddresses",
-                    "label": "Subnet Size"
-                  },
-                  {
-                    "columnId": "app_count",
-                    "label": "Apps  (excluding slots)"
-                  }
-                ]
-              },
-              "sortBy": [
-                {
-                  "itemKey": "$gen_compositeBar_remaining_instances_2",
-                  "sortOrder": 1
-                }
-              ]
+            "conditionalVisibility": {
+                "parameterName": "SelectedTab",
+                "comparison": "isEqualTo",
+                "value": "2"
             },
-            "name": "query - 3"
-          },
-          {
-            "type": 3,
+            "name": "text - 0"
+        },
+        {
+            "type": 12,
             "content": {
-              "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.web/serverfarms\"\r\n| where toupper(properties.hostingEnvironmentId) == '{SelectedAseId}'\r\n| project AseId=properties.hostingEnvironmentId, AspId=id, aspJoinId=toupper(id), Sku = sku.name, Capacity = sku.capacity\r\n| join kind=leftouter (\r\n    resources         \r\n    | where type == \"microsoft.web/sites\"\r\n    | project aspJoinId = toupper(properties.serverFarmId), AppId = id\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| project AseId, AspId, AppId",
-              "size": 0,
-              "showRefreshButton": true,
-              "showExportToExcel": true,
-              "queryType": 1,
-              "resourceType": "microsoft.resourcegraph/resources",
-              "crossComponentResources": [
-                "{Subscriptions}"
-              ],
-              "gridSettings": {
-                "formatters": [
-                  {
-                    "columnMatch": "AseId",
-                    "formatter": 13,
-                    "formatOptions": {
-                      "linkTarget": null,
-                      "showIcon": true
-                    }
-                  }
-                ],
-                "rowLimit": 1000
-              }
-            },
-            "name": "query - 5"
-          },
-          {
-            "type": 10,
-            "content": {
-              "chartId": "workbook0dfcecd6-6d95-430a-8a62-5ee8d8e6f54a",
-              "version": "MetricsItem/2.0",
-              "size": 0,
-              "chartType": 0,
-              "resourceType": "microsoft.web/sites",
-              "metricScope": 0,
-              "resourceParameter": "app_ids",
-              "resourceIds": [
-                "{app_ids}"
-              ],
-              "timeContext": {
-                "durationMs": 2592000000
-              },
-              "metrics": [
-                {
-                  "namespace": "microsoft.web/sites",
-                  "metric": "microsoft.web/sites--AverageMemoryWorkingSet",
-                  "aggregation": 4
-                },
-                {
-                  "namespace": "microsoft.web/sites",
-                  "metric": "microsoft.web/sites--PrivateBytes",
-                  "aggregation": 4
-                },
-                {
-                  "namespace": "microsoft.web/sites",
-                  "metric": "microsoft.web/sites--CpuTime",
-                  "aggregation": 1
-                }
-              ],
-              "resourceLimit": 1000,
-              "showRefreshButton": true,
-              "gridSettings": {
-                "formatters": [
-                  {
-                    "columnMatch": "Subscription",
-                    "formatter": 15,
-                    "formatOptions": {
-                      "linkTarget": null,
-                      "showIcon": true
-                    }
-                  },
-                  {
-                    "columnMatch": "Name",
-                    "formatter": 13,
-                    "formatOptions": {
-                      "linkTarget": "Resource",
-                      "showIcon": true
-                    }
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet",
-                    "formatter": 8,
-                    "formatOptions": {
-                      "palette": "coldHot"
+                "version": "NotebookGroup/1.0",
+                "groupType": "editable",
+                "items": [
+                    {
+                        "type": 3,
+                        "content": {
+                            "version": "KqlItem/1.0",
+                            "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinId = toupper(id)\r\n| join kind=leftouter (\r\n    resources \r\n    | where type == \"microsoft.web/serverfarms\" \r\n    | extend aseJoinId = toupper(properties.hostingEnvironmentId)\r\n    | summarize ase_used_instances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=fullouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, size = sku.size, instances = toint(sku.capacity), aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n    | project aseJoinId, aspJoinId, instances, tier, size\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=leftouter (\r\n            resources         \r\n            | where type == \"microsoft.web/sites\" or type == \"microsoft.web/sites/slots\"\r\n            | extend aspJoinId = toupper(properties.serverFarmId), isRunning = iif(properties.state == \"Running\", 1, 0)\r\n            | summarize appCount=count(), runningCount=sum(isRunning), app_ids = make_set(id) by aspJoinId\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| extend \r\n    maxAppRecommendation =\r\n        case(\r\n            size == 'F1', 9999,\r\n\r\n            size == 'B1', 8,\r\n            size == 'S1', 8,\r\n            size == 'P1v2', 8,\r\n            size == 'I1', 8,\r\n\r\n            size == 'B2', 16,\r\n            size == 'S2', 16,\r\n            size == 'P1v3', 16,\r\n            size == 'P2v2', 16,\r\n            size == 'I2', 16,\r\n            size == 'I1v2', 16,\r\n\r\n            size == 'B3', 32,\r\n            size == 'S3', 32,\r\n            size == 'P3v2', 32,\r\n            size == 'P2v3', 32,\r\n            size == 'I3', 32,\r\n            size == 'I2v2', 32,\r\n\r\n            size == 'P3v3', 64,\r\n            size == 'I3v2', 64,\r\n\r\n            size == 'I4v2', 128,\r\n            size == 'I5v2', 256,\r\n            size == 'I6v2', 512,\r\n            0\r\n        )\r\n| extend \r\n    allowedHybridConnections = case(\r\n            substring(size, 0, 1)  == 'B', 5,\r\n            substring(size, 0, 1)  == 'S', 25,\r\n            substring(size, 0, 1)  == 'P', 220,\r\n            substring(size, 0, 1)  == 'I', 220,\r\n            0\r\n   )\r\n| extend \r\n    remainingAppSlots = maxAppRecommendation - appCount,\r\n    used_recommended_apps = min_of(maxAppRecommendation, appCount)\r\n| extend\r\n    remaining_recommended_apps = max_of(0, remainingAppSlots),\r\n    over_recommended_apps =  -min_of(remainingAppSlots, 0)\r\n| project \r\n    aseId = aseJoinId, \r\n    aspId = aspJoinId, \r\n    tier, \r\n    size, \r\n    instances,\r\n    appCount, \r\n    runningCount,\r\n    remaining_possible_instances = min_of(100 - instances, (200 - ase_used_instances)),\r\n    used_recommended_apps,\r\n    remaining_recommended_apps,\r\n    over_recommended_apps,\r\n    app_ids = app_ids,\r\n    app_ids_json_string = tostring(app_ids),\r\n    apps_label = \r\n        strcat(\r\n            case(remaining_recommended_apps > 0, strcat(tostring(used_recommended_apps), \" (\", tostring(remaining_recommended_apps), \" remaining)\"), \"\"),\r\n            case(over_recommended_apps > 0, strcat(tostring(appCount), \" (\", tostring(over_recommended_apps), \" over)\"), \"\") \r\n        ),\r\n    allowedHybridConnections\r\n  \r\n| order by appCount, instances desc\r\n",
+                            "size": 1,
+                            "showRefreshButton": true,
+                            "exportedParameters": [
+                                {
+                                    "fieldName": "aspId",
+                                    "parameterName": "AppServicePlan",
+                                    "parameterType": 1
+                                },
+                                {
+                                    "fieldName": "app_ids",
+                                    "parameterName": "AppServiceIds",
+                                    "parameterType": 5
+                                },
+                                {
+                                    "fieldName": "app_ids_json_string",
+                                    "parameterName": "AppServiceIdsJsonString",
+                                    "parameterType": 1,
+                                    "defaultValue": "[]"
+                                },
+                                {
+                                    "fieldName": "allowedHybridConnections",
+                                    "parameterName": "allowedHybridConnections",
+                                    "parameterType": 1
+                                }
+                            ],
+                            "showExportToExcel": true,
+                            "queryType": 1,
+                            "resourceType": "microsoft.resourcegraph/resources",
+                            "crossComponentResources": [
+                                "{Subscriptions}"
+                            ],
+                            "gridSettings": {
+                                "formatters": [
+                                    {
+                                        "columnMatch": "tier",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "remaining_possible_instances",
+                                        "formatter": 22,
+                                        "formatOptions": {
+                                            "compositeBarSettings": {
+                                                "labelText": "[\"instances\"] / 100",
+                                                "columnSettings": [
+                                                    {
+                                                        "columnName": "instances",
+                                                        "color": "orange"
+                                                    },
+                                                    {
+                                                        "columnName": "remaining_possible_instances",
+                                                        "color": "blue"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "used_recommended_apps",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "remaining_recommended_apps",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "over_recommended_apps",
+                                        "formatter": 22,
+                                        "formatOptions": {
+                                            "compositeBarSettings": {
+                                                "labelText": "[\"apps_label\"]",
+                                                "columnSettings": [
+                                                    {
+                                                        "columnName": "used_recommended_apps",
+                                                        "color": "green"
+                                                    },
+                                                    {
+                                                        "columnName": "remaining_recommended_apps",
+                                                        "color": "blue"
+                                                    },
+                                                    {
+                                                        "columnName": "over_recommended_apps",
+                                                        "color": "red"
+                                                    }
+                                                ],
+                                                "noRowsScaling": true
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "app_ids",
+                                        "formatter": 5,
+                                        "formatOptions": {
+                                            "workbookContext": {
+                                                "componentIdSource": "workbook",
+                                                "resourceIdsSource": "workbook",
+                                                "templateIdSource": "static",
+                                                "templateId": "/",
+                                                "typeSource": "workbook",
+                                                "gallerySource": "workbook",
+                                                "locationSource": "default",
+                                                "workbookName": "App Service Plan Usage",
+                                                "passSpecificParams": true,
+                                                "templateParameters": []
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "apps_label",
+                                        "formatter": 5
+                                    }
+                                ],
+                                "sortBy": [
+                                    {
+                                        "itemKey": "$gen_link_aspId_1",
+                                        "sortOrder": 2
+                                    }
+                                ],
+                                "labelSettings": [
+                                    {
+                                        "columnId": "aseId",
+                                        "label": "ASE"
+                                    },
+                                    {
+                                        "columnId": "aspId",
+                                        "label": "ASP"
+                                    },
+                                    {
+                                        "columnId": "size",
+                                        "label": "Size"
+                                    },
+                                    {
+                                        "columnId": "instances",
+                                        "label": "Instances"
+                                    },
+                                    {
+                                        "columnId": "appCount",
+                                        "label": "App Count"
+                                    },
+                                    {
+                                        "columnId": "runningCount",
+                                        "label": "Running App Count"
+                                    },
+                                    {
+                                        "columnId": "remaining_possible_instances",
+                                        "label": "Available Instances for Plan"
+                                    },
+                                    {
+                                        "columnId": "over_recommended_apps",
+                                        "label": "Provisioned Apps Status"
+                                    },
+                                    {
+                                        "columnId": "allowedHybridConnections",
+                                        "label": "Allowed Hybrid Connections"
+                                    }
+                                ]
+                            },
+                            "sortBy": [
+                                {
+                                    "itemKey": "$gen_link_aspId_1",
+                                    "sortOrder": 2
+                                }
+                            ]
+                        },
+                        "name": "AppServicePlanOverview"
                     },
-                    "numberFormat": {
-                      "unit": 2,
-                      "options": {
-                        "style": "decimal"
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--PrivateBytes",
-                    "formatter": 8,
-                    "formatOptions": {
-                      "palette": "coldHot"
+                    {
+                        "type": 1,
+                        "content": {
+                            "json": "# App Service Plan / Apps Performance\r\n\r\n*If the overall CPU Time and Memory Percentage of the ASP is low, then it **may** indiciate its safe to scale down your ASP*\r\n\r\n*If no data is shown in the table then check you have Metrics being sent to a Log Workspace, in the Diagnostic Settings of your apps*\r\n\r\nThis table helps understand which apps fit well together in an ASP.\r\nIt summarizes CPU Time, Private Bytes, Requests across the Apps. If you spot Apps this are using more RAM, CPU Time, or have significantly more requests than its neighbours, then consider moving them into other ASPs.\r\n"
+                        },
+                        "name": "text - 6"
                     },
-                    "numberFormat": {
-                      "unit": 2,
-                      "options": {
-                        "style": "decimal"
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--PrivateBytes Timeline",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--CpuTime",
-                    "formatter": 8,
-                    "formatOptions": {
-                      "palette": "coldHot"
+                    {
+                        "type": 12,
+                        "content": {
+                            "version": "NotebookGroup/1.0",
+                            "groupType": "editable",
+                            "items": [
+                                {
+                                    "type": 10,
+                                    "content": {
+                                        "chartId": "workbook3552ec3b-7092-473b-bb3e-2c2e16ed2f96",
+                                        "version": "MetricsItem/2.0",
+                                        "size": 1,
+                                        "chartType": 2,
+                                        "resourceType": "microsoft.web/serverfarms",
+                                        "metricScope": 0,
+                                        "resourceParameter": "AppServicePlan",
+                                        "resourceIds": [
+                                            "{AppServicePlan}"
+                                        ],
+                                        "timeContextFromParameter": "MetricsTimeRange",
+                                        "timeContext": {
+                                            "durationMs": 604800000
+                                        },
+                                        "metrics": [
+                                            {
+                                                "namespace": "microsoft.web/serverfarms",
+                                                "metric": "microsoft.web/serverfarms--CpuPercentage",
+                                                "aggregation": 4,
+                                                "splitBy": null
+                                            },
+                                            {
+                                                "namespace": "microsoft.web/serverfarms",
+                                                "metric": "microsoft.web/serverfarms--MemoryPercentage",
+                                                "aggregation": 4
+                                            }
+                                        ],
+                                        "gridSettings": {
+                                            "rowLimit": 10000
+                                        }
+                                    },
+                                    "name": "metric - 1"
+                                },
+                                {
+                                    "type": 3,
+                                    "content": {
+                                        "version": "KqlItem/1.0",
+                                        "query": "{\"version\":\"ARMEndpoint/1.0\",\"data\":null,\"headers\":[],\"method\":\"GET\",\"path\":\"{AppServicePlan}/hybridConnectionRelays?api-version=2022-03-01\",\"urlParams\":[{\"key\":\"\",\"value\":\"\"}],\"batchDisabled\":false,\"transformers\":[{\"type\":\"jsonpath\",\"settings\":{\"tablePath\":\"\",\"columns\":[{\"path\":\"$.value.length\",\"columnid\":\"UsedHybridConnections\",\"substringRegexMatch\":\".*\",\"substringReplace\":\"$& / {allowedHybridConnections}\"}]}}]}",
+                                        "size": 4,
+                                        "queryType": 12
+                                    },
+                                    "name": "HybridConnectionSummary"
+                                }
+                            ]
+                        },
+                        "customWidth": "30",
+                        "name": "SelectedAppServicePlanSummary"
                     },
-                    "numberFormat": {
-                      "unit": 24,
-                      "options": {
-                        "style": "decimal"
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--CpuTime Timeline",
-                    "formatter": 5
-                  }
-                ],
-                "rowLimit": 10000,
-                "sortBy": [
-                  {
-                    "itemKey": "$gen_link_Name_1",
-                    "sortOrder": 1
-                  }
-                ],
-                "labelSettings": [
-                  {
-                    "columnId": "microsoft.web/sites--AverageMemoryWorkingSet",
-                    "label": "Average memory working set (Average)"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
-                    "label": "Average memory working set Timeline"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--PrivateBytes",
-                    "label": "Private Bytes (Average)"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--PrivateBytes Timeline",
-                    "label": "Private Bytes Timeline"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--CpuTime",
-                    "label": "CPU Time (Sum)"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--CpuTime Timeline",
-                    "label": "CPU Time Timeline"
-                  }
-                ]
-              },
-              "sortBy": [
-                {
-                  "itemKey": "$gen_link_Name_1",
-                  "sortOrder": 1
-                }
-              ],
-              "showExportToExcel": true
-            },
-            "name": "metric - 3"
-          }
-        ]
-      },
-      "conditionalVisibility": {
-        "parameterName": "SelectedTab",
-        "comparison": "isEqualTo",
-        "value": "3"
-      },
-      "name": "AppServiceEnvironment"
-    },
-    {
-      "type": 1,
-      "content": {
-        "json": "# App Service Plans\r\n\r\nThis pane shows you details about the App Service Plans within an ASE.\r\nAn App Service Plan can have a maximum of 100 instances running apps within it. This view shows you\r\n - Number of instance, and Apps in each App Service Plan\r\n - The max number of instances that can still be attached to an App Service plan\r\n - The number of apps running on an App Service Plan\r\n - The number of apps over recommendation running on an App Service Plan\r\n",
-        "style": "info"
-      },
-      "conditionalVisibility": {
-        "parameterName": "SelectedTab",
-        "comparison": "isEqualTo",
-        "value": "2"
-      },
-      "name": "text - 0"
-    },
-    {
-      "type": 12,
-      "content": {
-        "version": "NotebookGroup/1.0",
-        "groupType": "editable",
-        "items": [
-          {
-            "type": 3,
-            "content": {
-              "version": "KqlItem/1.0",
-              "query": "resources\r\n| where type == \"microsoft.web/hostingenvironments\"\r\n| project aseJoinId = toupper(id)\r\n| join kind=leftouter (\r\n    resources \r\n    | where type == \"microsoft.web/serverfarms\" \r\n    | extend aseJoinId = toupper(properties.hostingEnvironmentId)\r\n    | summarize ase_used_instances = sum(toint(sku.capacity)) by aseJoinId\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=fullouter (\r\n    resources\r\n    | where type == \"microsoft.web/serverfarms\"\r\n    | project id, tier = sku.tier, size = sku.size, instances = toint(sku.capacity), aseJoinId = toupper(properties.hostingEnvironmentId), aspJoinId = toupper(id)\r\n    | project aseJoinId, aspJoinId, instances, tier, size\r\n) on $left.aseJoinId == $right.aseJoinId\r\n| join kind=leftouter (\r\n            resources         \r\n            | where type == \"microsoft.web/sites\" or type == \"microsoft.web/sites/slots\"\r\n            | extend aspJoinId = toupper(properties.serverFarmId), isRunning = iif(properties.state == \"Running\", 1, 0)\r\n            | summarize appCount=count(), runningCount=sum(isRunning), app_ids = make_set(id) by aspJoinId\r\n) on $left.aspJoinId == $right.aspJoinId\r\n| extend \r\n    maxAppRecommendation =\r\n        case(\r\n            size == 'F1', 9999,\r\n\r\n            size == 'B1', 8,\r\n            size == 'S1', 8,\r\n            size == 'P1v2', 8,\r\n            size == 'I1', 8,\r\n\r\n            size == 'B2', 16,\r\n            size == 'S2', 16,\r\n            size == 'P1v3', 16,\r\n            size == 'P2v2', 16,\r\n            size == 'I2', 16,\r\n            size == 'I1v2', 16,\r\n\r\n            size == 'B3', 32,\r\n            size == 'S3', 32,\r\n            size == 'P3v2', 32,\r\n            size == 'P2v3', 32,\r\n            size == 'I3', 32,\r\n            size == 'I2v2', 32,\r\n\r\n            size == 'P3v3', 64,\r\n            size == 'I3v2', 64,\r\n\r\n            size == 'I4v2', 128,\r\n            size == 'I5v2', 256,\r\n            size == 'I6v2', 512,\r\n            0\r\n        )\r\n| extend \r\n    allowedHybridConnections = case(\r\n            substring(size, 0, 1)  == 'B', 5,\r\n            substring(size, 0, 1)  == 'S', 25,\r\n            substring(size, 0, 1)  == 'P', 220,\r\n            substring(size, 0, 1)  == 'I', 220,\r\n            0\r\n   )\r\n| extend \r\n    remainingAppSlots = maxAppRecommendation - appCount,\r\n    used_recommended_apps = min_of(maxAppRecommendation, appCount)\r\n| extend\r\n    remaining_recommended_apps = max_of(0, remainingAppSlots),\r\n    over_recommended_apps =  -min_of(remainingAppSlots, 0)\r\n| project \r\n    aseId = aseJoinId, \r\n    aspId = aspJoinId, \r\n    tier, \r\n    size, \r\n    instances,\r\n    appCount, \r\n    runningCount,\r\n    remaining_possible_instances = min_of(100 - instances, (200 - ase_used_instances)),\r\n    used_recommended_apps,\r\n    remaining_recommended_apps,\r\n    over_recommended_apps,\r\n    app_ids = app_ids,\r\n    app_ids_json_string = tostring(app_ids),\r\n    apps_label = \r\n        strcat(\r\n            case(remaining_recommended_apps > 0, strcat(tostring(used_recommended_apps), \" (\", tostring(remaining_recommended_apps), \" remaining)\"), \"\"),\r\n            case(over_recommended_apps > 0, strcat(tostring(appCount), \" (\", tostring(over_recommended_apps), \" over)\"), \"\") \r\n        ),\r\n    allowedHybridConnections\r\n  \r\n| order by appCount, instances desc\r\n",
-              "size": 1,
-              "showRefreshButton": true,
-              "exportedParameters": [
-                {
-                  "fieldName": "aspId",
-                  "parameterName": "AppServicePlan",
-                  "parameterType": 1
-                },
-                {
-                  "fieldName": "app_ids",
-                  "parameterName": "AppServiceIds",
-                  "parameterType": 5
-                },
-                {
-                  "fieldName": "app_ids_json_string",
-                  "parameterName": "AppServiceIdsJsonString",
-                  "parameterType": 1,
-                  "defaultValue": "[]"
-                },
-                {
-                  "fieldName": "allowedHybridConnections",
-                  "parameterName": "allowedHybridConnections",
-                  "parameterType": 1
-                }
-              ],
-              "showExportToExcel": true,
-              "queryType": 1,
-              "resourceType": "microsoft.resourcegraph/resources",
-              "crossComponentResources": [
-                "{Subscriptions}"
-              ],
-              "gridSettings": {
-                "formatters": [
-                  {
-                    "columnMatch": "tier",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "remaining_possible_instances",
-                    "formatter": 22,
-                    "formatOptions": {
-                      "compositeBarSettings": {
-                        "labelText": "[\"instances\"] / 100",
-                        "columnSettings": [
-                          {
-                            "columnName": "instances",
-                            "color": "orange"
-                          },
-                          {
-                            "columnName": "remaining_possible_instances",
-                            "color": "blue"
-                          }
-                        ]
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "used_recommended_apps",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "remaining_recommended_apps",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "over_recommended_apps",
-                    "formatter": 22,
-                    "formatOptions": {
-                      "compositeBarSettings": {
-                        "labelText": "[\"apps_label\"]",
-                        "columnSettings": [
-                          {
-                            "columnName": "used_recommended_apps",
-                            "color": "green"
-                          },
-                          {
-                            "columnName": "remaining_recommended_apps",
-                            "color": "blue"
-                          },
-                          {
-                            "columnName": "over_recommended_apps",
-                            "color": "red"
-                          }
+                    {
+                        "type": 10,
+                        "content": {
+                            "chartId": "workbook51c74cff-ccdc-4b69-b638-5ba0cbbf472d",
+                            "version": "MetricsItem/2.0",
+                            "size": 0,
+                            "chartType": 0,
+                            "resourceType": "microsoft.web/sites",
+                            "metricScope": 0,
+                            "resourceParameter": "AppServiceIds",
+                            "resourceIds": [
+                                "{AppServiceIds}"
+                            ],
+                            "timeContextFromParameter": "MetricsTimeRange",
+                            "timeContext": {
+                                "durationMs": 0
+                            },
+                            "metrics": [
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--AverageMemoryWorkingSet",
+                                    "aggregation": 4
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--PrivateBytes",
+                                    "aggregation": 4
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--CpuTime",
+                                    "aggregation": 1
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--AppConnections",
+                                    "aggregation": 4
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--IoReadBytesPerSecond",
+                                    "aggregation": 1
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--IoWriteBytesPerSecond",
+                                    "aggregation": 1
+                                },
+                                {
+                                    "namespace": "microsoft.web/sites",
+                                    "metric": "microsoft.web/sites--Requests",
+                                    "aggregation": 1
+                                }
+                            ],
+                            "resourceLimit": 1000,
+                            "showRefreshButton": true,
+                            "gridSettings": {
+                                "formatters": [
+                                    {
+                                        "columnMatch": "Subscription",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "Name",
+                                        "formatter": 13,
+                                        "formatOptions": {
+                                            "linkTarget": "Resource",
+                                            "showIcon": true
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 2,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--PrivateBytes",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 2,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--PrivateBytes Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--CpuTime",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 24,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--CpuTime Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--AppConnections",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 0,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--AppConnections Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--IoReadBytesPerSecond",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 11,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--IoReadBytesPerSecond Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--IoWriteBytesPerSecond",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 11,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--IoWriteBytesPerSecond Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--Requests",
+                                        "formatter": 8,
+                                        "formatOptions": {
+                                            "palette": "coldHot"
+                                        },
+                                        "numberFormat": {
+                                            "unit": 0,
+                                            "options": {
+                                                "style": "decimal"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--Requests Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--DataOut Timeline",
+                                        "formatter": 5
+                                    },
+                                    {
+                                        "columnMatch": "microsoft.web/sites--DataOut",
+                                        "formatter": 1,
+                                        "numberFormat": {
+                                            "unit": 0,
+                                            "options": null
+                                        }
+                                    }
+                                ],
+                                "rowLimit": 10000,
+                                "labelSettings": [
+                                    {
+                                        "columnId": "microsoft.web/sites--AverageMemoryWorkingSet",
+                                        "label": "Average memory working set (Average)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
+                                        "label": "Average memory working set Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--PrivateBytes",
+                                        "label": "Private Bytes (Average)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--PrivateBytes Timeline",
+                                        "label": "Private Bytes Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--CpuTime",
+                                        "label": "CPU Time (Sum)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--CpuTime Timeline",
+                                        "label": "CPU Time Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--AppConnections",
+                                        "label": "Connections (Average)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--AppConnections Timeline",
+                                        "label": "Connections Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--IoReadBytesPerSecond",
+                                        "label": "IO Read Bytes Per Second (Average)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--IoReadBytesPerSecond Timeline",
+                                        "label": "IO Read Bytes Per Second Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--IoWriteBytesPerSecond",
+                                        "label": "IO Write Bytes Per Second (Sum)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--IoWriteBytesPerSecond Timeline",
+                                        "label": "IO Write Bytes Per Second Timeline"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--Requests",
+                                        "label": "Requests (Sum)"
+                                    },
+                                    {
+                                        "columnId": "microsoft.web/sites--Requests Timeline",
+                                        "label": "Requests Timeline"
+                                    }
+                                ]
+                            },
+                            "sortBy": [],
+                            "showExportToExcel": true
+                        },
+                        "customWidth": "70",
+                        "name": "metric - 5"
+                    },
+                    {
+                        "type": 12,
+                        "content": {
+                            "version": "NotebookGroup/1.0",
+                            "groupType": "editable",
+                            "items": [
+                                {
+                                    "type": 1,
+                                    "content": {
+                                        "json": "# Apps inside App service plan\r\n\r\nAn App Service Plan can host many apps. This view shows you the CPU Time, and Private bytes used by the individual apps.\r\n\r\nHosting too many apps in an App Service plan can cause noisy neighbour syndrome, where the demands of one app have adverse effects on others.\r\n\r\nKnowing the RAM / CPU time of each apps will help you to move apps into different App Service plans appropriately."
+                                    },
+                                    "name": "text - 5"
+                                },
+                                {
+                                    "type": 12,
+                                    "content": {
+                                        "version": "NotebookGroup/1.0",
+                                        "groupType": "editable",
+                                        "items": [
+                                            {
+                                                "type": 1,
+                                                "content": {
+                                                    "json": "## CPU Time by App "
+                                                },
+                                                "name": "text - 6"
+                                            },
+                                            {
+                                                "type": 10,
+                                                "content": {
+                                                    "chartId": "workbook8d7870a8-9f53-486c-8f11-270d78c3bc8f",
+                                                    "version": "MetricsItem/2.0",
+                                                    "size": 0,
+                                                    "chartType": 2,
+                                                    "resourceType": "microsoft.web/sites",
+                                                    "metricScope": 0,
+                                                    "resourceParameter": "AppServiceIds",
+                                                    "resourceIds": [
+                                                        "{AppServiceIds}"
+                                                    ],
+                                                    "timeContextFromParameter": "MetricsTimeRange",
+                                                    "timeContext": {
+                                                        "durationMs": 604800000
+                                                    },
+                                                    "metrics": [
+                                                        {
+                                                            "namespace": "microsoft.web/sites",
+                                                            "metric": "microsoft.web/sites--CpuTime",
+                                                            "aggregation": 1,
+                                                            "splitBy": null
+                                                        }
+                                                    ],
+                                                    "gridSettings": {
+                                                        "rowLimit": 10000
+                                                    }
+                                                },
+                                                "name": "metric - 5"
+                                            }
+                                        ]
+                                    },
+                                    "customWidth": "33",
+                                    "name": "CpuTimeByApp"
+                                },
+                                {
+                                    "type": 12,
+                                    "content": {
+                                        "version": "NotebookGroup/1.0",
+                                        "groupType": "editable",
+                                        "items": [
+                                            {
+                                                "type": 1,
+                                                "content": {
+                                                    "json": "## Private Bytes by App"
+                                                },
+                                                "name": "text - 7"
+                                            },
+                                            {
+                                                "type": 10,
+                                                "content": {
+                                                    "chartId": "workbook8d7870a8-9f53-486c-8f11-270d78c3bc8f",
+                                                    "version": "MetricsItem/2.0",
+                                                    "size": 0,
+                                                    "chartType": 2,
+                                                    "resourceType": "microsoft.web/sites",
+                                                    "metricScope": 0,
+                                                    "resourceParameter": "AppServiceIds",
+                                                    "resourceIds": [
+                                                        "{AppServiceIds}"
+                                                    ],
+                                                    "timeContextFromParameter": "MetricsTimeRange",
+                                                    "timeContext": {
+                                                        "durationMs": 604800000
+                                                    },
+                                                    "metrics": [
+                                                        {
+                                                            "namespace": "microsoft.web/sites",
+                                                            "metric": "microsoft.web/sites--PrivateBytes",
+                                                            "aggregation": 4,
+                                                            "splitBy": null
+                                                        }
+                                                    ],
+                                                    "gridSettings": {
+                                                        "rowLimit": 10000
+                                                    }
+                                                },
+                                                "name": "metric - 5 - Copy"
+                                            }
+                                        ]
+                                    },
+                                    "customWidth": "33",
+                                    "name": "PrivateBytesByApp"
+                                },
+                                {
+                                    "type": 12,
+                                    "content": {
+                                        "version": "NotebookGroup/1.0",
+                                        "groupType": "editable",
+                                        "items": [
+                                            {
+                                                "type": 1,
+                                                "content": {
+                                                    "json": "## Requests by App"
+                                                },
+                                                "name": "text - 9"
+                                            },
+                                            {
+                                                "type": 10,
+                                                "content": {
+                                                    "chartId": "workbooke4de478c-6d77-4f44-be4b-53e583515219",
+                                                    "version": "MetricsItem/2.0",
+                                                    "size": 0,
+                                                    "chartType": 2,
+                                                    "resourceType": "microsoft.web/sites",
+                                                    "metricScope": 0,
+                                                    "resourceParameter": "AppServiceIds",
+                                                    "resourceIds": [
+                                                        "{AppServiceIds}"
+                                                    ],
+                                                    "timeContextFromParameter": "MetricsTimeRange",
+                                                    "timeContext": {
+                                                        "durationMs": 604800000
+                                                    },
+                                                    "metrics": [
+                                                        {
+                                                            "namespace": "microsoft.web/sites",
+                                                            "metric": "microsoft.web/sites--Requests",
+                                                            "aggregation": 1,
+                                                            "splitBy": null
+                                                        }
+                                                    ],
+                                                    "gridSettings": {
+                                                        "rowLimit": 10000
+                                                    }
+                                                },
+                                                "name": "metric - 9"
+                                            }
+                                        ]
+                                    },
+                                    "customWidth": "33",
+                                    "name": "RequestsByApp"
+                                }
+                            ]
+                        },
+                        "conditionalVisibilities": [
+                            {
+                                "parameterName": "SelectedTab",
+                                "comparison": "isEqualTo",
+                                "value": "2"
+                            },
+                            {
+                                "parameterName": "AppServicePlan",
+                                "comparison": "isNotEqualTo",
+                                "value": ""
+                            }
                         ],
-                        "noRowsScaling": true
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "app_ids",
-                    "formatter": 5,
-                    "formatOptions": {
-                      "workbookContext": {
-                        "componentIdSource": "workbook",
-                        "resourceIdsSource": "workbook",
-                        "templateIdSource": "static",
-                        "templateId": "/",
-                        "typeSource": "workbook",
-                        "gallerySource": "workbook",
-                        "locationSource": "default",
-                        "workbookName": "App Service Plan Usage",
-                        "passSpecificParams": true,
-                        "templateParameters": []
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "apps_label",
-                    "formatter": 5
-                  }
-                ],
-                "sortBy": [
-                  {
-                    "itemKey": "$gen_link_aseId_0",
-                    "sortOrder": 1
-                  }
-                ],
-                "labelSettings": [
-                  {
-                    "columnId": "aseId",
-                    "label": "ASE"
-                  },
-                  {
-                    "columnId": "aspId",
-                    "label": "ASP"
-                  },
-                  {
-                    "columnId": "size",
-                    "label": "Size"
-                  },
-                  {
-                    "columnId": "instances",
-                    "label": "Instances"
-                  },
-                  {
-                    "columnId": "appCount",
-                    "label": "App Count"
-                  },
-                  {
-                    "columnId": "runningCount",
-                    "label": "Running App Count"
-                  },
-                  {
-                    "columnId": "remaining_possible_instances",
-                    "label": "Available Instances for Plan"
-                  },
-                  {
-                    "columnId": "over_recommended_apps",
-                    "label": "Provisioned Apps Status"
-                  },
-                  {
-                    "columnId": "allowedHybridConnections",
-                    "label": "Allowed Hybrid Connections"
-                  }
-                ]
-              },
-              "sortBy": [
-                {
-                  "itemKey": "$gen_link_aseId_0",
-                  "sortOrder": 1
-                }
-              ]
-            },
-            "name": "AppServicePlanOverview"
-          },
-          {
-            "type": 1,
-            "content": {
-              "json": "# App Service Plan / Apps Performance\r\n\r\n*If the overall CPU Time and Memory Percentage of the ASP is low, then it **may** indiciate its safe to scale down your ASP*\r\n\r\n*If no data is shown in the table then check you have Metrics being sent to a Log Workspace, in the Diagnostic Settings of your apps*\r\n\r\nThis table helps understand which apps fit well together in an ASP.\r\nIt summarizes CPU Time, Private Bytes, Requests across the Apps. If you spot Apps this are using more RAM, CPU Time, or have significantly more requests than its neighbours, then consider moving them into other ASPs.\r\n"
-            },
-            "name": "text - 6"
-          },
-          {
-            "type": 12,
-            "content": {
-              "version": "NotebookGroup/1.0",
-              "groupType": "editable",
-              "items": [
-                {
-                  "type": 10,
-                  "content": {
-                    "chartId": "workbook3552ec3b-7092-473b-bb3e-2c2e16ed2f96",
-                    "version": "MetricsItem/2.0",
-                    "size": 1,
-                    "chartType": 2,
-                    "resourceType": "microsoft.web/serverfarms",
-                    "metricScope": 0,
-                    "resourceParameter": "AppServicePlan",
-                    "resourceIds": [
-                      "{AppServicePlan}"
-                    ],
-                    "timeContext": {
-                      "durationMs": 604800000
+                        "name": "SelectedAppServicePlan"
                     },
-                    "metrics": [
-                      {
-                        "namespace": "microsoft.web/serverfarms",
-                        "metric": "microsoft.web/serverfarms--CpuPercentage",
-                        "aggregation": 4,
-                        "splitBy": null
-                      },
-                      {
-                        "namespace": "microsoft.web/serverfarms",
-                        "metric": "microsoft.web/serverfarms--MemoryPercentage",
-                        "aggregation": 4
-                      }
-                    ],
-                    "gridSettings": {
-                      "rowLimit": 10000
-                    }
-                  },
-                  "name": "metric - 1"
-                },
-                {
-                  "type": 3,
-                  "content": {
-                    "version": "KqlItem/1.0",
-                    "query": "{\"version\":\"ARMEndpoint/1.0\",\"data\":null,\"headers\":[],\"method\":\"GET\",\"path\":\"{AppServicePlan}/hybridConnectionRelays?api-version=2022-03-01\",\"urlParams\":[{\"key\":\"\",\"value\":\"\"}],\"batchDisabled\":false,\"transformers\":[{\"type\":\"jsonpath\",\"settings\":{\"tablePath\":\"\",\"columns\":[{\"path\":\"$.value.length\",\"columnid\":\"UsedHybridConnections\",\"substringRegexMatch\":\".*\",\"substringReplace\":\"$& / {allowedHybridConnections}\"}]}}]}",
-                    "size": 4,
-                    "queryType": 12
-                  },
-                  "name": "HybridConnectionSummary"
-                }
-              ]
-            },
-            "customWidth": "30",
-            "name": "SelectedAppServicePlanSummary"
-          },
-          {
-            "type": 10,
-            "content": {
-              "chartId": "workbook51c74cff-ccdc-4b69-b638-5ba0cbbf472d",
-              "version": "MetricsItem/2.0",
-              "size": 0,
-              "chartType": 0,
-              "resourceType": "microsoft.web/sites",
-              "metricScope": 0,
-              "resourceParameter": "AppServiceIds",
-              "resourceIds": [
-                "{AppServiceIds}"
-              ],
-              "timeContext": {
-                "durationMs": 3600000
-              },
-              "metrics": [
-                {
-                  "namespace": "microsoft.web/sites",
-                  "metric": "microsoft.web/sites--AverageMemoryWorkingSet",
-                  "aggregation": 4
-                },
-                {
-                  "namespace": "microsoft.web/sites",
-                  "metric": "microsoft.web/sites--PrivateBytes",
-                  "aggregation": 4
-                },
-                {
-                  "namespace": "microsoft.web/sites",
-                  "metric": "microsoft.web/sites--CpuTime",
-                  "aggregation": 1
-                },
-                {
-                  "namespace": "microsoft.web/sites",
-                  "metric": "microsoft.web/sites--AppConnections",
-                  "aggregation": 4
-                }
-              ],
-              "resourceLimit": 1000,
-              "showRefreshButton": true,
-              "gridSettings": {
-                "formatters": [
-                  {
-                    "columnMatch": "Subscription",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "Name",
-                    "formatter": 13,
-                    "formatOptions": {
-                      "linkTarget": "Resource",
-                      "showIcon": true
-                    }
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet",
-                    "formatter": 8,
-                    "formatOptions": {
-                      "palette": "coldHot"
-                    },
-                    "numberFormat": {
-                      "unit": 2,
-                      "options": {
-                        "style": "decimal"
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--PrivateBytes",
-                    "formatter": 8,
-                    "formatOptions": {
-                      "palette": "coldHot"
-                    },
-                    "numberFormat": {
-                      "unit": 2,
-                      "options": {
-                        "style": "decimal"
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--PrivateBytes Timeline",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--CpuTime",
-                    "formatter": 8,
-                    "formatOptions": {
-                      "palette": "coldHot"
-                    },
-                    "numberFormat": {
-                      "unit": 24,
-                      "options": {
-                        "style": "decimal"
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--CpuTime Timeline",
-                    "formatter": 5
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--AppConnections",
-                    "formatter": 8,
-                    "formatOptions": {
-                      "palette": "coldHot"
-                    },
-                    "numberFormat": {
-                      "unit": 0,
-                      "options": {
-                        "style": "decimal"
-                      }
-                    }
-                  },
-                  {
-                    "columnMatch": "microsoft.web/sites--AppConnections Timeline",
-                    "formatter": 5
-                  }
-                ],
-                "rowLimit": 10000,
-                "sortBy": [
-                  {
-                    "itemKey": "$gen_heatmap_microsoft.web/sites--PrivateBytes_4",
-                    "sortOrder": 2
-                  }
-                ],
-                "labelSettings": [
-                  {
-                    "columnId": "microsoft.web/sites--AverageMemoryWorkingSet",
-                    "label": "Average memory working set (Average)"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--AverageMemoryWorkingSet Timeline",
-                    "label": "Average memory working set Timeline"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--PrivateBytes",
-                    "label": "Private Bytes (Average)"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--PrivateBytes Timeline",
-                    "label": "Private Bytes Timeline"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--CpuTime",
-                    "label": "CPU Time (Sum)"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--CpuTime Timeline",
-                    "label": "CPU Time Timeline"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--AppConnections",
-                    "label": "Connections (Average)"
-                  },
-                  {
-                    "columnId": "microsoft.web/sites--AppConnections Timeline",
-                    "label": "Connections Timeline"
-                  }
-                ]
-              },
-              "sortBy": [
-                {
-                  "itemKey": "$gen_heatmap_microsoft.web/sites--PrivateBytes_4",
-                  "sortOrder": 2
-                }
-              ],
-              "showExportToExcel": true
-            },
-            "customWidth": "70",
-            "name": "metric - 5"
-          },
-          {
-            "type": 12,
-            "content": {
-              "version": "NotebookGroup/1.0",
-              "groupType": "editable",
-              "items": [
-                {
-                  "type": 1,
-                  "content": {
-                    "json": "# Apps inside App service plan\r\n\r\nAn App Service Plan can host many apps. This view shows you the CPU Time, and Private bytes used by the individual apps.\r\n\r\nHosting too many apps in an App Service plan can cause noisy neighbour syndrome, where the demands of one app have adverse effects on others.\r\n\r\nKnowing the RAM / CPU time of each apps will help you to move apps into different App Service plans appropriately."
-                  },
-                  "name": "text - 5"
-                },
-                {
-                  "type": 12,
-                  "content": {
-                    "version": "NotebookGroup/1.0",
-                    "groupType": "editable",
-                    "items": [
-                      {
-                        "type": 1,
+                    {
+                        "type": 12,
                         "content": {
-                          "json": "## CPU Time by App "
+                            "version": "NotebookGroup/1.0",
+                            "groupType": "editable",
+                            "items": [
+                                {
+                                    "type": 1,
+                                    "content": {
+                                        "json": "# Slots\r\n"
+                                    },
+                                    "name": "text - 5"
+                                },
+                                {
+                                    "type": 12,
+                                    "content": {
+                                        "version": "NotebookGroup/1.0",
+                                        "groupType": "editable",
+                                        "items": [
+                                            {
+                                                "type": 1,
+                                                "content": {
+                                                    "json": "## CPU Time by App "
+                                                },
+                                                "name": "text - 6"
+                                            },
+                                            {
+                                                "type": 10,
+                                                "content": {
+                                                    "chartId": "workbook8d7870a8-9f53-486c-8f11-270d78c3bc8f",
+                                                    "version": "MetricsItem/2.0",
+                                                    "size": 0,
+                                                    "chartType": 2,
+                                                    "resourceType": "microsoft.web/sites/slots",
+                                                    "metricScope": 0,
+                                                    "resourceParameter": "AppServiceIds",
+                                                    "resourceIds": [
+                                                        "{AppServiceIds}"
+                                                    ],
+                                                    "timeContextFromParameter": "MetricsTimeRange",
+                                                    "timeContext": {
+                                                        "durationMs": 604800000
+                                                    },
+                                                    "metrics": [
+                                                        {
+                                                            "namespace": "microsoft.web/sites/slots",
+                                                            "metric": "microsoft.web/sites/slots--CpuTime",
+                                                            "aggregation": 1,
+                                                            "splitBy": null
+                                                        }
+                                                    ],
+                                                    "gridSettings": {
+                                                        "rowLimit": 10000
+                                                    }
+                                                },
+                                                "name": "metric - 5"
+                                            }
+                                        ]
+                                    },
+                                    "customWidth": "33",
+                                    "name": "CpuTimeByApp"
+                                },
+                                {
+                                    "type": 12,
+                                    "content": {
+                                        "version": "NotebookGroup/1.0",
+                                        "groupType": "editable",
+                                        "items": [
+                                            {
+                                                "type": 1,
+                                                "content": {
+                                                    "json": "## Private Bytes by App"
+                                                },
+                                                "name": "text - 7"
+                                            },
+                                            {
+                                                "type": 10,
+                                                "content": {
+                                                    "chartId": "workbook8d7870a8-9f53-486c-8f11-270d78c3bc8f",
+                                                    "version": "MetricsItem/2.0",
+                                                    "size": 0,
+                                                    "chartType": 2,
+                                                    "resourceType": "microsoft.web/sites/slots",
+                                                    "metricScope": 0,
+                                                    "resourceParameter": "AppServiceIds",
+                                                    "resourceIds": [
+                                                        "{AppServiceIds}"
+                                                    ],
+                                                    "timeContextFromParameter": "MetricsTimeRange",
+                                                    "timeContext": {
+                                                        "durationMs": 604800000
+                                                    },
+                                                    "metrics": [
+                                                        {
+                                                            "namespace": "microsoft.web/sites/slots",
+                                                            "metric": "microsoft.web/sites/slots--PrivateBytes",
+                                                            "aggregation": 4,
+                                                            "splitBy": null
+                                                        }
+                                                    ],
+                                                    "gridSettings": {
+                                                        "rowLimit": 10000
+                                                    }
+                                                },
+                                                "name": "metric - 5 - Copy"
+                                            }
+                                        ]
+                                    },
+                                    "customWidth": "33",
+                                    "name": "PrivateBytesByApp"
+                                },
+                                {
+                                    "type": 12,
+                                    "content": {
+                                        "version": "NotebookGroup/1.0",
+                                        "groupType": "editable",
+                                        "items": [
+                                            {
+                                                "type": 1,
+                                                "content": {
+                                                    "json": "## Requests by App"
+                                                },
+                                                "name": "text - 9"
+                                            },
+                                            {
+                                                "type": 10,
+                                                "content": {
+                                                    "chartId": "workbooke4de478c-6d77-4f44-be4b-53e583515219",
+                                                    "version": "MetricsItem/2.0",
+                                                    "size": 0,
+                                                    "chartType": 2,
+                                                    "resourceType": "microsoft.web/sites/slots",
+                                                    "metricScope": 0,
+                                                    "resourceParameter": "AppServiceIds",
+                                                    "resourceIds": [
+                                                        "{AppServiceIds}"
+                                                    ],
+                                                    "timeContextFromParameter": "MetricsTimeRange",
+                                                    "timeContext": {
+                                                        "durationMs": 604800000
+                                                    },
+                                                    "metrics": [
+                                                        {
+                                                            "namespace": "microsoft.web/sites/slots",
+                                                            "metric": "microsoft.web/sites/slots--Requests",
+                                                            "aggregation": 1,
+                                                            "splitBy": null
+                                                        }
+                                                    ],
+                                                    "gridSettings": {
+                                                        "rowLimit": 10000
+                                                    }
+                                                },
+                                                "name": "metric - 9"
+                                            }
+                                        ]
+                                    },
+                                    "customWidth": "33",
+                                    "name": "RequestsByApp"
+                                }
+                            ]
                         },
-                        "name": "text - 6"
-                      },
-                      {
-                        "type": 10,
-                        "content": {
-                          "chartId": "workbook8d7870a8-9f53-486c-8f11-270d78c3bc8f",
-                          "version": "MetricsItem/2.0",
-                          "size": 0,
-                          "chartType": 2,
-                          "resourceType": "microsoft.web/sites",
-                          "metricScope": 0,
-                          "resourceParameter": "AppServiceIds",
-                          "resourceIds": [
-                            "{AppServiceIds}"
-                          ],
-                          "timeContext": {
-                            "durationMs": 604800000
-                          },
-                          "metrics": [
+                        "conditionalVisibilities": [
                             {
-                              "namespace": "microsoft.web/sites",
-                              "metric": "microsoft.web/sites--CpuTime",
-                              "aggregation": 1,
-                              "splitBy": null
-                            }
-                          ],
-                          "gridSettings": {
-                            "rowLimit": 10000
-                          }
-                        },
-                        "name": "metric - 5"
-                      }
-                    ]
-                  },
-                  "customWidth": "33",
-                  "name": "CpuTimeByApp"
-                },
-                {
-                  "type": 12,
-                  "content": {
-                    "version": "NotebookGroup/1.0",
-                    "groupType": "editable",
-                    "items": [
-                      {
-                        "type": 1,
-                        "content": {
-                          "json": "## Private Bytes by App"
-                        },
-                        "name": "text - 7"
-                      },
-                      {
-                        "type": 10,
-                        "content": {
-                          "chartId": "workbook8d7870a8-9f53-486c-8f11-270d78c3bc8f",
-                          "version": "MetricsItem/2.0",
-                          "size": 0,
-                          "chartType": 2,
-                          "resourceType": "microsoft.web/sites",
-                          "metricScope": 0,
-                          "resourceParameter": "AppServiceIds",
-                          "resourceIds": [
-                            "{AppServiceIds}"
-                          ],
-                          "timeContext": {
-                            "durationMs": 604800000
-                          },
-                          "metrics": [
+                                "parameterName": "SelectedTab",
+                                "comparison": "isEqualTo",
+                                "value": "2"
+                            },
                             {
-                              "namespace": "microsoft.web/sites",
-                              "metric": "microsoft.web/sites--PrivateBytes",
-                              "aggregation": 4,
-                              "splitBy": null
+                                "parameterName": "AppServicePlan",
+                                "comparison": "isNotEqualTo",
+                                "value": ""
                             }
-                          ],
-                          "gridSettings": {
-                            "rowLimit": 10000
-                          }
-                        },
-                        "name": "metric - 5 - Copy"
-                      }
-                    ]
-                  },
-                  "customWidth": "33",
-                  "name": "PrivateBytesByApp"
-                },
-                {
-                  "type": 12,
-                  "content": {
-                    "version": "NotebookGroup/1.0",
-                    "groupType": "editable",
-                    "items": [
-                      {
-                        "type": 1,
-                        "content": {
-                          "json": "## Requests by App"
-                        },
-                        "name": "text - 9"
-                      },
-                      {
-                        "type": 10,
-                        "content": {
-                          "chartId": "workbooke4de478c-6d77-4f44-be4b-53e583515219",
-                          "version": "MetricsItem/2.0",
-                          "size": 0,
-                          "chartType": 2,
-                          "resourceType": "microsoft.web/sites",
-                          "metricScope": 0,
-                          "resourceParameter": "AppServiceIds",
-                          "resourceIds": [
-                            "{AppServiceIds}"
-                          ],
-                          "timeContext": {
-                            "durationMs": 604800000
-                          },
-                          "metrics": [
-                            {
-                              "namespace": "microsoft.web/sites",
-                              "metric": "microsoft.web/sites--Requests",
-                              "aggregation": 1,
-                              "splitBy": null
-                            }
-                          ],
-                          "gridSettings": {
-                            "rowLimit": 10000
-                          }
-                        },
-                        "name": "metric - 9"
-                      }
-                    ]
-                  },
-                  "customWidth": "33",
-                  "name": "RequestsByApp"
-                }
-              ]
+                        ],
+                        "name": "SelectedAppServicePlan - Copy"
+                    }
+                ],
+                "exportParameters": true
             },
-            "conditionalVisibilities": [
-              {
+            "conditionalVisibility": {
                 "parameterName": "SelectedTab",
                 "comparison": "isEqualTo",
                 "value": "2"
-              },
-              {
-                "parameterName": "AppServicePlan",
-                "comparison": "isNotEqualTo",
-                "value": ""
-              }
-            ],
-            "name": "SelectedAppServicePlan"
-          },
-          {
-            "type": 12,
-            "content": {
-              "version": "NotebookGroup/1.0",
-              "groupType": "editable",
-              "items": [
-                {
-                  "type": 1,
-                  "content": {
-                    "json": "# Slots\r\n"
-                  },
-                  "name": "text - 5"
-                },
-                {
-                  "type": 12,
-                  "content": {
-                    "version": "NotebookGroup/1.0",
-                    "groupType": "editable",
-                    "items": [
-                      {
-                        "type": 1,
-                        "content": {
-                          "json": "## CPU Time by App "
-                        },
-                        "name": "text - 6"
-                      },
-                      {
-                        "type": 10,
-                        "content": {
-                          "chartId": "workbook8d7870a8-9f53-486c-8f11-270d78c3bc8f",
-                          "version": "MetricsItem/2.0",
-                          "size": 0,
-                          "chartType": 2,
-                          "resourceType": "microsoft.web/sites/slots",
-                          "metricScope": 0,
-                          "resourceParameter": "AppServiceIds",
-                          "resourceIds": [
-                            "{AppServiceIds}"
-                          ],
-                          "timeContext": {
-                            "durationMs": 604800000
-                          },
-                          "metrics": [
-                            {
-                              "namespace": "microsoft.web/sites/slots",
-                              "metric": "microsoft.web/sites/slots--CpuTime",
-                              "aggregation": 1,
-                              "splitBy": null
-                            }
-                          ],
-                          "gridSettings": {
-                            "rowLimit": 10000
-                          }
-                        },
-                        "name": "metric - 5"
-                      }
-                    ]
-                  },
-                  "customWidth": "33",
-                  "name": "CpuTimeByApp"
-                },
-                {
-                  "type": 12,
-                  "content": {
-                    "version": "NotebookGroup/1.0",
-                    "groupType": "editable",
-                    "items": [
-                      {
-                        "type": 1,
-                        "content": {
-                          "json": "## Private Bytes by App"
-                        },
-                        "name": "text - 7"
-                      },
-                      {
-                        "type": 10,
-                        "content": {
-                          "chartId": "workbook8d7870a8-9f53-486c-8f11-270d78c3bc8f",
-                          "version": "MetricsItem/2.0",
-                          "size": 0,
-                          "chartType": 2,
-                          "resourceType": "microsoft.web/sites/slots",
-                          "metricScope": 0,
-                          "resourceParameter": "AppServiceIds",
-                          "resourceIds": [
-                            "{AppServiceIds}"
-                          ],
-                          "timeContext": {
-                            "durationMs": 604800000
-                          },
-                          "metrics": [
-                            {
-                              "namespace": "microsoft.web/sites/slots",
-                              "metric": "microsoft.web/sites/slots--PrivateBytes",
-                              "aggregation": 4,
-                              "splitBy": null
-                            }
-                          ],
-                          "gridSettings": {
-                            "rowLimit": 10000
-                          }
-                        },
-                        "name": "metric - 5 - Copy"
-                      }
-                    ]
-                  },
-                  "customWidth": "33",
-                  "name": "PrivateBytesByApp"
-                },
-                {
-                  "type": 12,
-                  "content": {
-                    "version": "NotebookGroup/1.0",
-                    "groupType": "editable",
-                    "items": [
-                      {
-                        "type": 1,
-                        "content": {
-                          "json": "## Requests by App"
-                        },
-                        "name": "text - 9"
-                      },
-                      {
-                        "type": 10,
-                        "content": {
-                          "chartId": "workbooke4de478c-6d77-4f44-be4b-53e583515219",
-                          "version": "MetricsItem/2.0",
-                          "size": 0,
-                          "chartType": 2,
-                          "resourceType": "microsoft.web/sites/slots",
-                          "metricScope": 0,
-                          "resourceParameter": "AppServiceIds",
-                          "resourceIds": [
-                            "{AppServiceIds}"
-                          ],
-                          "timeContext": {
-                            "durationMs": 604800000
-                          },
-                          "metrics": [
-                            {
-                              "namespace": "microsoft.web/sites/slots",
-                              "metric": "microsoft.web/sites/slots--Requests",
-                              "aggregation": 1,
-                              "splitBy": null
-                            }
-                          ],
-                          "gridSettings": {
-                            "rowLimit": 10000
-                          }
-                        },
-                        "name": "metric - 9"
-                      }
-                    ]
-                  },
-                  "customWidth": "33",
-                  "name": "RequestsByApp"
-                }
-              ]
             },
-            "conditionalVisibilities": [
-              {
-                "parameterName": "SelectedTab",
-                "comparison": "isEqualTo",
-                "value": "2"
-              },
-              {
-                "parameterName": "AppServicePlan",
-                "comparison": "isNotEqualTo",
-                "value": ""
-              }
-            ],
-            "name": "SelectedAppServicePlan - Copy"
-          }
-        ],
-        "exportParameters": true
-      },
-      "conditionalVisibility": {
-        "parameterName": "SelectedTab",
-        "comparison": "isEqualTo",
-        "value": "2"
-      },
-      "name": "AppServicePlans"
-    }
-  ],
-  "fallbackResourceIds": [
-    "azure monitor"
-  ],
-  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+            "name": "AppServicePlans"
+        }
+    ],
+    "fallbackResourceIds": [
+        "azure monitor"
+    ],
+    "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
 }
